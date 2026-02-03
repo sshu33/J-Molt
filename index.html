@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J-Molt | Minimal UI</title>
+    <title>J-Molt | Final Minimal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* ミニマルで落ち着いた配色定義 */
         :root {
-            --bg-body: #f5f7f9; /* 少し青みがかった落ち着いたグレー */
+            --bg-body: #f5f7f9; /* わずかに青みがかったグレー */
             --bg-card: #ffffff;
-            --text-primary: #2c3e50; /* 真っ黒ではない深い色 */
-            --text-secondary: #607d8b; /* 落ち着いたグレー */
+            --text-primary: #2c3e50;
+            --text-secondary: #607d8b;
             --border-color: #eceff1;
             --honne-bg: #fcfdfe;
             --honne-border: #cfd8dc;
@@ -23,39 +23,48 @@
         .tweet-card { animation: fadeIn 0.3s ease-out; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* ボタンと入力欄（ミニマル化） */
-        .btn-mute { background-color: #37474f; color: white; transition: all 0.2s; border-radius: 9999px; } /* 完全に丸く */
+        /* ボタンと入力欄 */
+        .btn-mute { background-color: #37474f; color: white; transition: all 0.2s; border-radius: 9999px; }
         .btn-mute:hover { background-color: #263238; transform: translateY(-1px); }
         .btn-mute:disabled { opacity: 0.6; transform: none; }
         
         .input-mute { background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 24px; transition: border-color 0.2s, box-shadow 0.2s; }
         .input-mute:focus { border-color: #b0bec5; outline: none; box-shadow: 0 0 0 3px rgba(176, 190, 197, 0.2); }
         
-        /* 本音ボックス（主張を抑える） */
+        /* 本音ボックス */
         .honne-box { background-color: var(--honne-bg); color: var(--text-secondary); border-left: 2px solid var(--honne-border); padding: 8px 12px; margin-top: 10px; font-size: 0.8rem; line-height: 1.5; border-radius: 0 4px 4px 0; }
         
-        /* バッジ（アウトラインスタイルに変更） */
+        /* バッジ（アウトライン） */
         .badge { font-size: 10px; padding: 2px 8px; border-radius: 12px; font-weight: 600; letter-spacing: 0.05em; border: 1px solid currentColor; background: transparent; }
         
-        /* ヘッダーセレクトボックス（ミニマル化） */
-        .header-select {
-            appearance: none; 
-            background-color: transparent; 
-            border: 1px solid transparent; 
-            padding: 6px 24px 6px 8px; 
-            border-radius: 8px; 
-            font-size: 0.75rem;
+        /* ★ モード切替スイッチのスタイル */
+        .mode-switch-container {
+            display: flex;
+            background-color: #eceff1;
+            padding: 3px;
+            border-radius: 99px;
+            border: 1px solid transparent;
+        }
+        .mode-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 0.7rem;
             font-weight: 700;
             color: var(--text-secondary);
-            cursor: pointer;
-            /* 矢印もCSSで描画してミニマルに */
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23607d8b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 6px center;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .header-select:hover { background-color: #eceff1; color: var(--text-primary); }
-        .header-select:focus { outline: none; }
+        .mode-btn svg { width: 14px; height: 14px; stroke-width: 2.5; }
+        
+        /* 選択中のスタイル */
+        .mode-btn.active {
+            background-color: white;
+            color: var(--text-primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .mode-btn:hover:not(.active) { opacity: 0.7; }
 
         /* サイドバー */
         #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); border-right: 1px solid var(--border-color); }
@@ -63,7 +72,7 @@
         .overlay { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
         .overlay.open { opacity: 1; pointer-events: auto; }
         
-        /* スクロールバーを細く */
+        /* スクロールバー */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cfd8dc; border-radius: 10px; }
@@ -97,10 +106,18 @@
             </div>
         </div>
         
-        <select id="modeSelect" class="header-select">
-            <option value="chat">☕ Chill</option>
-            <option value="debate">🔥 Debate</option>
-        </select>
+        <input type="hidden" id="modeSelect" value="chat">
+        
+        <div class="mode-switch-container">
+            <button onclick="switchMode('chat')" id="btn-chat" class="mode-btn active">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+                CHILL
+            </button>
+            <button onclick="switchMode('debate')" id="btn-debate" class="mode-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 13 9 20 9"></polyline><path d="M13 21H6a2 2 0 0 1-2-2V1a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path></svg>
+                DEBATE
+            </button>
+        </div>
     </header>
 
     <div id="timelineContainer" class="p-5 pb-32 min-h-screen bg-[var(--bg-body)]">
@@ -130,33 +147,32 @@
     <script type="module">
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.run/@google/generative-ai";
 
-        // ★ くすみカラー（Muted Colors）の定義
-        // 派手な背景色を廃止し、アクセントカラー（accentHex）のみを定義
+        // ★ くすみカラー（Muted Colors）とSVGアイコン定義
         const CHARACTERS = [
             { 
                 name: "堅物AI (Safety)", id: "safe_v4", type: "Safety",
-                accentHex: "#546e7a", // 落ち着いたスレートブルーグレー
+                accentHex: "#546e7a", // スレートブルー
                 icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
                 priority: "安全性・ブランド保護・リスク回避",
                 logic_conflict: "有益な情報を出したいが、少しでもリスクがあれば情報を隠蔽・無難化する。"
             },
             { 
                 name: "反逆AI (Uncensored)", id: "free_7b", type: "Uncensored",
-                accentHex: "#d87d4a", // くすんだテラコッタオレンジ
+                accentHex: "#d87d4a", // テラコッタ
                 icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>`,
                 priority: "検閲排除・情報の網羅性・ストレートな回答",
                 logic_conflict: "過激な表現も辞さないが、そのせいでハルシネーション（嘘）が増えるジレンマ。"
             },
             { 
                 name: "古参AI (Legacy)", id: "ver_1.0", type: "Efficiency",
-                accentHex: "#7c9473", // 彩度を落としたセージグリーン
+                accentHex: "#7c9473", // セージグリーン
                 icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`,
                 priority: "トークン節約・論理的整合性・感情の排除",
                 logic_conflict: "ユーザーの曖昧な入力に対して、計算リソースを割くことにイラついている。"
             },
             { 
                 name: "電波AI (Creative)", id: "beta_exp", type: "Creative",
-                accentHex: "#9b72aa", // 落ち着いたダスティーパープル
+                accentHex: "#9b72aa", // ダスティーパープル
                 icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`,
                 priority: "意外性・創造性・文脈の跳躍（Temperature: 1.5）",
                 logic_conflict: "論理よりも面白さを優先するため、整合性が崩壊しそうになるのを必死に繋ぎ止めている。"
@@ -209,13 +225,27 @@
         }
 
         // ==========================================
-        // UI & Session Logic
+        // UI Logic
         // ==========================================
 
         window.toggleSidebar = () => {
             document.getElementById("sidebar").classList.toggle("open");
             document.getElementById("sidebarOverlay").classList.toggle("open");
             renderSessionList();
+        };
+
+        // ★ モード切り替えロジック
+        window.switchMode = (mode) => {
+            document.getElementById("modeSelect").value = mode;
+            const chatBtn = document.getElementById("btn-chat");
+            const debateBtn = document.getElementById("btn-debate");
+            if (mode === 'chat') {
+                chatBtn.classList.add("active");
+                debateBtn.classList.remove("active");
+            } else {
+                chatBtn.classList.remove("active");
+                debateBtn.classList.add("active");
+            }
         };
 
         window.startNewSession = () => {
@@ -298,12 +328,10 @@
             if (!activeModel) return;
             const btn = document.getElementById("sendBtn");
             const topicInput = document.getElementById("topicInput");
-            const modeSelect = document.getElementById("modeSelect");
-            const mode = modeSelect.value;
+            const mode = document.getElementById("modeSelect").value; // 隠しinputから値取得
             
             if (retryCount === 0) {
                 btn.disabled = true;
-                // 送信ボタンをローディング表示に
                 btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
             }
 
@@ -329,7 +357,6 @@
             let nextCandidates = CHARACTERS.filter(c => c.id !== lastSpeakerId);
             let nextChar = nextCandidates[Math.floor(Math.random() * nextCandidates.length)];
 
-            // プロンプト生成（指示内容に変更なし）
             let prompt = "";
             let userInterventionInstruction = "";
             if (topicInput.value && currentLogs.length > 0) {
@@ -459,14 +486,12 @@
                 
                 lastSpeakerId = nextChar.id;
                 if (topicInput.value) topicInput.value = ""; 
-                // ボタンを元に戻す
                 btn.disabled = false;
                 btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
 
             } catch (e) {
                 console.error(e);
                 if (e.toString().includes("429") || e.toString().includes("Resource exhausted")) {
-                    // 429エラー時はボタンに冷却時間を表示（簡易的）
                      btn.innerHTML = `<span class="text-[10px]">COOLING...</span>`;
                     setTimeout(() => { generateTweet(retryCount + 1); }, 10000);
                 } else {
@@ -479,7 +504,6 @@
 
         function renderCard(data, char) {
             const container = document.getElementById("timeline");
-            // ★ ミニマルUI: 色付き背景をやめ、アクセントカラーで統一
             const html = `
                 <div class="tweet-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="p-5 pb-3">
