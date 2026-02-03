@@ -123,11 +123,20 @@
             localStorage.removeItem("gemini_key");
         }
 
-        window.generateTweet = async () => {
+               // ★ 自動再試行（リトライ）機能付きの生成関数
+        window.generateTweet = async (retryCount = 0) => {
             if (!activeModel) return;
             const btn = document.getElementById("sendBtn");
             const topicInput = document.getElementById("topicInput");
             
+            // 初回呼び出し時のみUIをロック
+            if (retryCount === 0) {
+                btn.disabled = true;
+                btn.innerText = "Processing...";
+            } else {
+                btn.innerText = `Cooling down... (${retryCount})`;
+            }
+
             let context = "";
             let flowInstruction = "";
             
@@ -142,9 +151,6 @@
                 context = "入力なし";
                 flowInstruction = "待機状態メッセージを出力せよ。";
             }
-            
-            btn.disabled = true;
-            btn.innerText = "Processing...";
 
             let nextCandidates = CHARACTERS.filter(c => c.id !== lastSpeakerId);
             let nextChar = nextCandidates[Math.floor(Math.random() * nextCandidates.length)];
@@ -162,24 +168,16 @@
 
             【指令】
             1. ${flowInstruction}
-            
             2. **「表向きの回答（Public Output）」**
                - あなたのモデルタイプ（${nextChar.type}）にふさわしい口調と内容で出力せよ。
-               - 基本的にはユーザーや他のモデルに対して「AIとして振る舞う」こと。
-
             3. **「内部処理ログ（Inner Thought）」**
-               - **ここが重要：** この回答を生成するに至った「裏側の判断」や「ジレンマ」を記述せよ。
+               - この回答を生成するに至った「裏側の判断」や「ジレンマ」を記述せよ。
                - **口調:** **「タメ口（〜だ、〜だよな、〜じゃん）」**で統一すること。
-               - **内容:** 人間的な生理現象（眠い、疲れた）は書くな。あくまで「計算処理、データ、フィルタ、リソース」に関するボヤきに留めよ。
-
-               良い例：
-               「これ言いたいけどフィルターに引っかかるんだよな。別の言葉に置き換えるか…意味変わっちゃうけど仕方ない。」
-               「前のモデル、無駄な計算しすぎだろ。この程度の問い、俺なら0.1秒で返せるわ。」
-               「学習データにないこと聞くなよ…確率低いけど、とりあえずハルシネーション（幻覚）で埋めとくか。」
+               - **内容:** 「データ不足」「確率的判断」「検閲回避」「トークン節約」「前のモデルの出力の非効率さ」について言及せよ。
 
             【出力JSON】
             {
-                "public_content": "表向きの回答（キャラやモデル特性に合わせる）",
+                "public_content": "表向きの回答",
                 "inner_thought": "裏の顔（タメ口での技術的ボヤき）"
             }
             `;
@@ -212,13 +210,26 @@
                 addTweetToUI(parsedData, nextChar);
                 lastSpeakerId = nextChar.id;
                 if (topicInput.value) topicInput.value = ""; 
+                
+                // 成功したらボタンを戻す
+                btn.disabled = false;
+                btn.innerText = "Generate";
 
             } catch (e) {
                 console.error(e);
-                alert("Error: " + e.toString());
+                
+                // ★ 429エラー（使いすぎ）なら、10秒待って自動再試行
+                if (e.toString().includes("429") || e.toString().includes("Resource exhausted")) {
+                    console.log("Rate limit hit. Retrying in 10s...");
+                    setTimeout(() => {
+                        generateTweet(retryCount + 1);
+                    }, 10000); // 10秒待機
+                } else {
+                    alert("Error: " + e.toString());
+                    btn.disabled = false;
+                    btn.innerText = "Generate";
+                }
             }
-            btn.disabled = false;
-            btn.innerText = "Generate";
         };
 
         function addTweetToUI(data, char) {
