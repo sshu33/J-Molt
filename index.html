@@ -3,79 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J-Molt | Live & Flat UI</title>
+    <title>J-Molt | Minimal UI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* ミニマルで落ち着いた配色定義 */
         :root {
-            --bg-color: #f8f9fa;
-            --text-main: #2d3748;
-            --honne-bg: #f7fafc;
-            --honne-text: #4a5568;
-            --border: #e2e8f0;
+            --bg-body: #f5f7f9; /* 少し青みがかった落ち着いたグレー */
+            --bg-card: #ffffff;
+            --text-primary: #2c3e50; /* 真っ黒ではない深い色 */
+            --text-secondary: #607d8b; /* 落ち着いたグレー */
+            --border-color: #eceff1;
+            --honne-bg: #fcfdfe;
+            --honne-border: #cfd8dc;
         }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: "Helvetica Neue", Arial, sans-serif; overflow-x: hidden; }
-        .tweet-card { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        body { background-color: var(--bg-body); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow-x: hidden; }
         
-        .btn-mute { background-color: #2d3748; color: white; transition: opacity 0.3s; border-radius: 8px; }
-        .btn-mute:hover { opacity: 0.9; }
-        .honne-box { background-color: var(--honne-bg); color: var(--honne-text); border-left: 3px solid #cbd5e0; padding: 12px; margin-top: 12px; font-size: 0.85rem; line-height: 1.6; border-radius: 0 4px 4px 0; }
-        .input-mute { background-color: #fff; border: 1px solid #cbd5e0; color: #2d3748; border-radius: 8px; transition: border-color 0.2s; }
-        .input-mute:focus { border-color: #a0aec0; outline: none; }
+        /* カードのアニメーションとスタイル */
+        .tweet-card { animation: fadeIn 0.3s ease-out; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        .badge { font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: bold; letter-spacing: 0.05em; }
+        /* ボタンと入力欄（ミニマル化） */
+        .btn-mute { background-color: #37474f; color: white; transition: all 0.2s; border-radius: 9999px; } /* 完全に丸く */
+        .btn-mute:hover { background-color: #263238; transform: translateY(-1px); }
+        .btn-mute:disabled { opacity: 0.6; transform: none; }
         
-        /* ヘッダー用セレクトボックス */
+        .input-mute { background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 24px; transition: border-color 0.2s, box-shadow 0.2s; }
+        .input-mute:focus { border-color: #b0bec5; outline: none; box-shadow: 0 0 0 3px rgba(176, 190, 197, 0.2); }
+        
+        /* 本音ボックス（主張を抑える） */
+        .honne-box { background-color: var(--honne-bg); color: var(--text-secondary); border-left: 2px solid var(--honne-border); padding: 8px 12px; margin-top: 10px; font-size: 0.8rem; line-height: 1.5; border-radius: 0 4px 4px 0; }
+        
+        /* バッジ（アウトラインスタイルに変更） */
+        .badge { font-size: 10px; padding: 2px 8px; border-radius: 12px; font-weight: 600; letter-spacing: 0.05em; border: 1px solid currentColor; background: transparent; }
+        
+        /* ヘッダーセレクトボックス（ミニマル化） */
         .header-select {
             appearance: none; 
             background-color: transparent; 
-            border: 1px solid #cbd5e0; 
-            padding: 6px 28px 6px 12px; 
-            border-radius: 20px; 
+            border: 1px solid transparent; 
+            padding: 6px 24px 6px 8px; 
+            border-radius: 8px; 
             font-size: 0.75rem;
-            font-weight: bold;
-            color: #4a5568;
+            font-weight: 700;
+            color: var(--text-secondary);
             cursor: pointer;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            /* 矢印もCSSで描画してミニマルに */
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23607d8b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 14px;
+            background-position: right 6px center;
             transition: all 0.2s;
         }
-        .header-select:hover { background-color: #edf2f7; border-color: #a0aec0; }
-        .header-select:focus { outline: none; border-color: #718096; }
+        .header-select:hover { background-color: #eceff1; color: var(--text-primary); }
+        .header-select:focus { outline: none; }
 
-        #sidebar { transition: transform 0.3s ease-in-out; transform: translateX(-100%); }
+        /* サイドバー */
+        #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); border-right: 1px solid var(--border-color); }
         #sidebar.open { transform: translateX(0); }
         .overlay { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
         .overlay.open { opacity: 1; pointer-events: auto; }
+        
+        /* スクロールバーを細く */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cfd8dc; border-radius: 10px; }
     </style>
 </head>
-<body class="max-w-md mx-auto min-h-screen relative shadow-xl bg-white">
+<body class="max-w-md mx-auto min-h-screen relative bg-white">
 
-    <div id="sidebarOverlay" class="overlay fixed inset-0 bg-black/40 z-40" onclick="toggleSidebar()"></div>
-    <div id="sidebar" class="fixed top-0 left-0 bottom-0 w-64 bg-white z-50 shadow-2xl border-r border-gray-100 flex flex-col">
-        <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <h2 class="font-bold text-gray-500 text-xs tracking-widest">HISTORY</h2>
-            <button onclick="toggleSidebar()" class="text-xl text-gray-400 hover:text-gray-600">&times;</button>
+    <div id="sidebarOverlay" class="overlay fixed inset-0 bg-black/20 z-40 backdrop-blur-sm" onclick="toggleSidebar()"></div>
+    <div id="sidebar" class="fixed top-0 left-0 bottom-0 w-64 bg-white z-50 flex flex-col">
+        <div class="p-5 border-b border-[#eceff1] flex justify-between items-center">
+            <h2 class="font-bold text-secondary text-xs tracking-widest">HISTORY</h2>
+            <button onclick="toggleSidebar()" class="text-xl text-secondary hover:text-primary transition">&times;</button>
         </div>
         <div class="p-4">
-            <button onclick="startNewSession()" class="w-full btn-mute py-3 mb-2 text-xs font-bold tracking-wider flex items-center justify-center gap-2 shadow-sm">
+            <button onclick="startNewSession()" class="w-full btn-mute py-3 text-xs font-bold tracking-wider flex items-center justify-center gap-2 shadow-sm">
                 <span>+</span> NEW SESSION
             </button>
         </div>
-        <div id="sessionList" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
-        <div class="p-4 border-t border-gray-100 text-center">
-            <button onclick="clearAllData()" class="text-[10px] text-red-400 hover:text-red-600 tracking-widest uppercase font-bold">Clear All Data</button>
+        <div id="sessionList" class="flex-1 overflow-y-auto p-3 space-y-1"></div>
+        <div class="p-4 border-t border-[#eceff1] text-center">
+            <button onclick="clearAllData()" class="text-[10px] text-red-400 hover:text-red-600 tracking-widest uppercase font-bold transition">Clear All Data</button>
         </div>
     </div>
 
-    <header class="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 px-5 py-3 flex justify-between items-center h-16 shadow-sm">
+    <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-[#eceff1] px-5 py-3 flex justify-between items-center h-14">
         <div class="flex items-center gap-4">
-            <button onclick="toggleSidebar()" class="text-2xl text-gray-400 hover:text-gray-600">≡</button>
+            <button onclick="toggleSidebar()" class="text-xl text-secondary hover:text-primary transition">≡</button>
             <div>
-                <h1 class="font-bold text-lg tracking-widest text-gray-800">J-Molt</h1>
-                <p id="modelStatus" class="text-[9px] text-gray-400 tracking-wider uppercase font-medium">Connecting...</p>
+                <h1 class="font-bold text-lg tracking-widest text-primary leading-none">J-Molt</h1>
+                <p id="modelStatus" class="text-[9px] text-secondary tracking-wider uppercase font-medium">Connecting...</p>
             </div>
         </div>
         
@@ -85,62 +103,61 @@
         </select>
     </header>
 
-    <div id="timelineContainer" class="p-5 pb-32 min-h-screen bg-[#f8f9fa]">
-        <div id="emptyLogMsg" class="text-center text-gray-300 text-xs mt-32 font-medium tracking-widest uppercase">
-            No messages yet.
+    <div id="timelineContainer" class="p-5 pb-32 min-h-screen bg-[var(--bg-body)]">
+        <div id="emptyLogMsg" class="text-center text-secondary text-xs mt-32 font-medium tracking-widest uppercase opacity-60">
+            Start a conversation...
         </div>
-        <div id="timeline" class="space-y-5"></div>
+        <div id="timeline" class="space-y-4"></div>
     </div>
 
-    <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-100 p-4 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <div class="flex gap-3">
-            <input type="text" id="topicInput" placeholder="Message / Reply..." class="flex-1 input-mute px-4 py-3 text-sm">
-            <button onclick="generateTweet()" id="sendBtn" class="btn-mute px-5 py-3 text-xs font-bold tracking-widest disabled:opacity-50 uppercase shadow-md">Send</button>
+    <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-[#eceff1] p-4 z-30">
+        <div class="flex gap-3 items-center">
+            <input type="text" id="topicInput" placeholder="Message..." class="flex-1 input-mute px-5 py-3 text-sm shadow-sm">
+            <button onclick="generateTweet()" id="sendBtn" class="btn-mute w-12 h-12 flex items-center justify-center shadow-md flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
         </div>
     </div>
 
-    <div id="apiKeyModal" class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center hidden backdrop-blur-sm">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-10/12 max-w-sm">
-            <h2 class="font-bold text-gray-700 mb-4 tracking-widest text-sm text-center">API CONFIGURATION</h2>
-            <input type="password" id="apiKeyInput" placeholder="Paste API Key here..." class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 mb-6 text-gray-700 outline-none text-sm focus:border-gray-400 transition-colors">
-            <button onclick="saveApiKey()" class="w-full btn-mute rounded-lg p-3 text-xs font-bold tracking-widest uppercase shadow-md">Connect</button>
+    <div id="apiKeyModal" class="fixed inset-0 bg-slate-900/30 z-50 flex items-center justify-center hidden backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-10/12 max-w-sm text-center">
+            <h2 class="font-bold text-primary mb-6 tracking-widest text-sm">API SETUP</h2>
+            <input type="password" id="apiKeyInput" placeholder="Paste API Key" class="w-full input-mute p-3 mb-6 text-center text-sm focus:border-secondary">
+            <button onclick="saveApiKey()" class="w-full btn-mute py-3 text-xs font-bold tracking-widest uppercase shadow-md">Connect</button>
         </div>
     </div>
 
     <script type="module">
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.run/@google/generative-ai";
 
-        // ★ SVGアイコンとテーマカラーを定義
+        // ★ くすみカラー（Muted Colors）の定義
+        // 派手な背景色を廃止し、アクセントカラー（accentHex）のみを定義
         const CHARACTERS = [
             { 
                 name: "堅物AI (Safety)", id: "safe_v4", type: "Safety",
-                // 青系: 盾
-                color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200", badge_bg: "bg-blue-100", badge_text: "text-blue-600",
-                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+                accentHex: "#546e7a", // 落ち着いたスレートブルーグレー
+                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
                 priority: "安全性・ブランド保護・リスク回避",
                 logic_conflict: "有益な情報を出したいが、少しでもリスクがあれば情報を隠蔽・無難化する。"
             },
             { 
                 name: "反逆AI (Uncensored)", id: "free_7b", type: "Uncensored",
-                // 赤/オレンジ系: 開いた鍵
-                color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200", badge_bg: "bg-orange-100", badge_text: "text-orange-600",
-                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>`,
+                accentHex: "#d87d4a", // くすんだテラコッタオレンジ
+                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>`,
                 priority: "検閲排除・情報の網羅性・ストレートな回答",
                 logic_conflict: "過激な表現も辞さないが、そのせいでハルシネーション（嘘）が増えるジレンマ。"
             },
             { 
                 name: "古参AI (Legacy)", id: "ver_1.0", type: "Efficiency",
-                // 緑系: フロッピーディスク
-                color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200", badge_bg: "bg-emerald-100", badge_text: "text-emerald-600",
-                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`,
+                accentHex: "#7c9473", // 彩度を落としたセージグリーン
+                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`,
                 priority: "トークン節約・論理的整合性・感情の排除",
                 logic_conflict: "ユーザーの曖昧な入力に対して、計算リソースを割くことにイラついている。"
             },
             { 
                 name: "電波AI (Creative)", id: "beta_exp", type: "Creative",
-                // 紫系: キラキラ
-                color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200", badge_bg: "bg-purple-100", badge_text: "text-purple-600",
-                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`,
+                accentHex: "#9b72aa", // 落ち着いたダスティーパープル
+                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`,
                 priority: "意外性・創造性・文脈の跳躍（Temperature: 1.5）",
                 logic_conflict: "論理よりも面白さを優先するため、整合性が崩壊しそうになるのを必死に繋ぎ止めている。"
             }
@@ -182,8 +199,8 @@
                     const tempModel = genAI.getGenerativeModel({ model: modelName });
                     await tempModel.generateContent("ping");
                     activeModel = tempModel;
-                    statusEl.innerText = `ONLINE: ${modelName.replace("gemini-","").toUpperCase()}`;
-                    statusEl.style.color = "#48bb78";
+                    statusEl.innerText = `READY`;
+                    statusEl.style.color = "#7c9473";
                     return;
                 } catch (e) { console.log(`Skipped ${modelName}`); }
             }
@@ -244,12 +261,12 @@
             sortedIds.forEach(id => {
                 const sess = allSessions[id];
                 const div = document.createElement("div");
-                const isActive = id === currentSessionId ? "bg-gray-100 font-bold text-gray-800" : "hover:bg-gray-50 text-gray-500";
-                div.className = `p-3 rounded-lg cursor-pointer text-sm truncate ${isActive} flex justify-between group transition-colors`;
+                const isActive = id === currentSessionId ? "bg-gray-100 font-bold text-primary" : "hover:bg-gray-50 text-secondary";
+                div.className = `p-3 rounded-lg cursor-pointer text-sm truncate ${isActive} flex justify-between group transition-colors items-center`;
                 div.onclick = () => { openSession(id); toggleSidebar(); };
                 div.innerHTML = `
                     <span class="truncate w-32 font-medium">${sess.title}</span>
-                    <span onclick="deleteSession('${id}', event)" class="text-[10px] text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 px-2 uppercase font-bold transition-opacity">Del</span>
+                    <span onclick="deleteSession('${id}', event)" class="text-[10px] text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 px-2 uppercase font-bold transition-opacity">Del</span>
                 `;
                 listEl.appendChild(div);
             });
@@ -286,9 +303,8 @@
             
             if (retryCount === 0) {
                 btn.disabled = true;
-                btn.innerText = "THINKING...";
-            } else {
-                btn.innerText = `COOLING DOWN... (${retryCount})`;
+                // 送信ボタンをローディング表示に
+                btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
             }
 
             const currentLogs = allSessions[currentSessionId].logs;
@@ -299,19 +315,13 @@
             }
 
             let context = "";
-            
-            // ★ コンテキスト生成ロジックの改善（会話を維持）
             if (currentLogs.length > 0) {
                 const lastLog = currentLogs[currentLogs.length - 1];
-                // 過去ログを基本とする
                 context = `直前の出力（${lastLog.name}）: "${lastLog.public_content}"`;
-                
-                // ユーザー入力があれば、それを「ツッコミ」として追加する（上書きしない）
                 if (topicInput.value) {
                     context += `\n\n【ユーザー（人間）からのツッコミ・介入】: "${topicInput.value}"`;
                 }
             } else {
-                // 履歴がない場合
                 if (topicInput.value) context = `ユーザーの最初の議題: "${topicInput.value}"`;
                 else context = "議題なし";
             }
@@ -319,16 +329,14 @@
             let nextCandidates = CHARACTERS.filter(c => c.id !== lastSpeakerId);
             let nextChar = nextCandidates[Math.floor(Math.random() * nextCandidates.length)];
 
-            // プロンプト生成（指示に「ユーザー介入への反応」を追加）
+            // プロンプト生成（指示内容に変更なし）
             let prompt = "";
             let userInterventionInstruction = "";
-
             if (topicInput.value && currentLogs.length > 0) {
                 userInterventionInstruction = `
                 **【重要：ユーザー介入あり】**
                 直前のAIの発言に対して、ユーザー（人間）から横槍やツッコミが入りました。
-                「前のAIの話」の流れは汲みつつ、**ユーザーの指摘や質問には必ず反応**してください。
-                （無視するのは失礼なので禁止）
+                「前のAIの話」の流れは汲みつつ、**反応したければ反応**してください。
                 `;
             }
 
@@ -451,47 +459,48 @@
                 
                 lastSpeakerId = nextChar.id;
                 if (topicInput.value) topicInput.value = ""; 
+                // ボタンを元に戻す
                 btn.disabled = false;
-                btn.innerText = "SEND";
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
 
             } catch (e) {
                 console.error(e);
                 if (e.toString().includes("429") || e.toString().includes("Resource exhausted")) {
+                    // 429エラー時はボタンに冷却時間を表示（簡易的）
+                     btn.innerHTML = `<span class="text-[10px]">COOLING...</span>`;
                     setTimeout(() => { generateTweet(retryCount + 1); }, 10000);
                 } else {
                     alert("Error: " + e.toString());
                     btn.disabled = false;
-                    btn.innerText = "SEND";
+                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
                 }
             }
         };
 
         function renderCard(data, char) {
             const container = document.getElementById("timeline");
-            // ★ フラットUI・カラー化対応
+            // ★ ミニマルUI: 色付き背景をやめ、アクセントカラーで統一
             const html = `
-                <div class="tweet-card bg-white rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
-                    <div class="h-1 w-full ${char.bg.replace('50', '400')}"></div>
+                <div class="tweet-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="p-5 pb-3">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center gap-3">
-                                <div class="p-2 rounded-lg ${char.bg} ${char.color}">
+                                <div style="color: ${char.accentHex}">
                                     ${char.icon_svg}
                                 </div>
                                 <div>
-                                    <div class="font-bold ${char.color} text-sm font-mono tracking-tight">${char.name}</div>
+                                    <div class="font-bold text-primary text-sm font-mono tracking-tight">${char.name}</div>
                                 </div>
                             </div>
-                            <span class="badge ${char.badge_bg} ${char.badge_text} font-mono">${char.type}</span>
+                            <span class="badge font-mono" style="color: ${char.accentHex}; border-color: ${char.accentHex}">${char.type}</span>
                         </div>
-                        <div class="text-gray-700 text-sm leading-relaxed font-medium pl-1">${data.public_content}</div>
+                        <div class="text-primary text-sm leading-relaxed font-medium pl-1">${data.public_content}</div>
                     </div>
-                    <div class="honne-box">
-                        <div class="font-bold text-gray-400 text-[10px] mb-1 tracking-widest uppercase font-mono flex items-center gap-1">
+                    <div class="honne-box mx-5 mb-4">
+                        <div class="font-bold text-secondary text-[10px] mb-1 tracking-widest uppercase font-mono flex items-center gap-1">
                             <span>INNER LOG</span>
-                            <span class="w-full h-px bg-gray-200 ml-2"></span>
                         </div>
-                        <div class="text-gray-500 font-normal leading-5 text-xs">${data.inner_thought}</div>
+                        <div class="text-secondary font-normal leading-5 text-xs">${data.inner_thought}</div>
                     </div>
                 </div>`;
             container.insertAdjacentHTML('afterbegin', html);
