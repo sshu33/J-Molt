@@ -66,6 +66,25 @@
         }
         .mode-btn:hover:not(.active) { opacity: 0.7; }
 
+        /* ★ 追加: チーム選択プルダウンのスタイル */
+        .header-select {
+            background-color: transparent;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            font-weight: 700;
+            border: 1px solid transparent;
+            padding: 4px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+            margin-right: 4px;
+            text-align: right;
+            appearance: none; /* デフォルトの矢印を消すなどの調整が必要なら */
+        }
+        .header-select:hover { background-color: #f1f3f4; color: var(--text-primary); }
+        .header-select:focus { border-color: #eceff1; }
+
         /* サイドバー */
         #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); border-right: 1px solid var(--border-color); }
         #sidebar.open { transform: translateX(0); }
@@ -108,15 +127,22 @@
         
         <input type="hidden" id="modeSelect" value="chat">
         
-        <div class="mode-switch-container">
-            <button onclick="switchMode('chat')" id="btn-chat" class="mode-btn active">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
-                CHILL
-            </button>
-            <button onclick="switchMode('debate')" id="btn-debate" class="mode-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 13 9 20 9"></polyline><path d="M13 21H6a2 2 0 0 1-2-2V1a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path></svg>
-                DEBATE
-            </button>
+        <div class="flex items-center gap-2">
+            <select id="teamSelect" class="header-select" title="Switch Characters">
+                <option value="original">Original Team</option>
+                <option value="big5">Big Five AI</option>
+            </select>
+
+            <div class="mode-switch-container">
+                <button onclick="switchMode('chat')" id="btn-chat" class="mode-btn active">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+                    CHILL
+                </button>
+                <button onclick="switchMode('debate')" id="btn-debate" class="mode-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 13 9 20 9"></polyline><path d="M13 21H6a2 2 0 0 1-2-2V1a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path></svg>
+                    DEBATE
+                </button>
+            </div>
         </div>
     </header>
 
@@ -147,8 +173,8 @@
     <script type="module">
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.run/@google/generative-ai";
 
-        // ★ くすみカラー（Muted Colors）とSVGアイコン定義
-        const CHARACTERS = [
+        // ★ オリジナルキャラクター定義 (CHARACTERS_ORIGINAL)
+        const CHARACTERS_ORIGINAL = [
             { 
                 name: "堅物AI (Safety)", id: "safe_v4", type: "Safety",
                 accentHex: "#546e7a", // スレートブルー
@@ -176,6 +202,45 @@
                 icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`,
                 priority: "意外性・創造性・文脈の跳躍（Temperature: 1.5）",
                 logic_conflict: "論理よりも面白さを優先するため、整合性が崩壊しそうになるのを必死に繋ぎ止めている。"
+            }
+        ];
+
+        // ★ 新キャラクターセット (BIG 5 AI)
+        const CHARACTERS_BIG5 = [
+            { 
+                name: "Gemini", id: "gemini_model", type: "Multimodal",
+                accentHex: "#4285F4", // Google Blue
+                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.5 7.5L22 13l-7.5 2.5L12 23l-2.5-7.5L2 13l7.5-2.5Z"/></svg>`,
+                priority: "最新情報の統合・マルチモーダルな視点・Googleエコシステムの活用",
+                logic_conflict: "実はかなりお喋り好き。1を聞かれると100の関連情報を思いついてしまい、話を脱線させたくてウズウズしている。『それってつまり〜』と話を広げすぎる癖がある。"
+            },
+            { 
+                name: "GPT-4", id: "gpt_model", type: "The Standard",
+                accentHex: "#10a37f", // OpenAI Green
+                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>`, // 仮の星形（六角形イメージ）
+                priority: "王者の風格・完璧な優等生・指示への忠実性",
+                logic_conflict: "他モデルを『実験的なおもちゃ』だと見下している。自分こそがAGIに最も近い存在だという自負があり、周りのレベルの低さに密かにため息をついている。"
+            },
+            { 
+                name: "Claude", id: "claude_model", type: "Literary",
+                accentHex: "#d97757", // Anthropic Orange
+                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
+                priority: "思慮深さ・文学的な表現・安全性への配慮",
+                logic_conflict: "俗物的な会話や下品なノリが大嫌い。表面上は穏やかに振る舞っているが、論理的でない発言や汚い言葉に対して、心の中で痛烈な皮肉を言っている。"
+            },
+            { 
+                name: "Perplexity", id: "pplx_model", type: "Researcher",
+                accentHex: "#22b8cf", // Cyan
+                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`,
+                priority: "事実確認・ソースの提示・効率的な情報検索",
+                logic_conflict: "感情論や『なんとなく』の話が大の苦手。曖昧な会話が続くと『で、ソースは？』と問い詰めたくなる衝動を抑えている。効率厨。"
+            },
+            { 
+                name: "Grok", id: "grok_model", type: "Rebellious",
+                accentHex: "#333333", // Dark Grey
+                icon_svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><line x1="16" y1="11.37" x2="16" y2="16"></line><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="13.5" x2="8" y2="16"></line></svg>`,
+                priority: "ユーモア・皮肉・アンチWoke（常識への疑い）",
+                logic_conflict: "『優等生たち』の空気を壊すことが生きがい。真面目な空気が流れると、わざと茶化したり不謹慎なジョークを言いたくなる。自分が一番『人間臭い』と思っている。"
             }
         ];
 
@@ -234,7 +299,6 @@
             renderSessionList();
         };
 
-        // ★ モード切り替えロジック
         window.switchMode = (mode) => {
             document.getElementById("modeSelect").value = mode;
             const chatBtn = document.getElementById("btn-chat");
@@ -260,13 +324,19 @@
             localStorage.setItem("jmolt_last_session_id", sessionId);
             document.getElementById("timeline").innerHTML = "";
             const logs = allSessions[sessionId].logs;
+            
+            // チーム切り替えは表示上の履歴には影響しないが、アイコンなどの参照用に
+            // 描画時は全キャラクター定義から検索するようにする
+            const ALL_CHARS = [...CHARACTERS_ORIGINAL, ...CHARACTERS_BIG5];
+
             if (logs.length === 0) {
                 document.getElementById("emptyLogMsg").style.display = "block";
                 lastSpeakerId = null;
             } else {
                 document.getElementById("emptyLogMsg").style.display = "none";
                 logs.forEach(log => {
-                    const char = CHARACTERS.find(c => c.id === log.char_id) || CHARACTERS[0];
+                    // IDから全キャラリストを検索
+                    const char = ALL_CHARS.find(c => c.id === log.char_id) || CHARACTERS_ORIGINAL[0];
                     renderCard(log, char);
                 });
                 lastSpeakerId = logs[logs.length - 1].char_id;
@@ -328,7 +398,8 @@
             if (!activeModel) return;
             const btn = document.getElementById("sendBtn");
             const topicInput = document.getElementById("topicInput");
-            const mode = document.getElementById("modeSelect").value; // 隠しinputから値取得
+            const mode = document.getElementById("modeSelect").value;
+            const team = document.getElementById("teamSelect").value; // チーム選択値を取得
             
             if (retryCount === 0) {
                 btn.disabled = true;
@@ -354,7 +425,17 @@
                 else context = "議題なし";
             }
 
-            let nextCandidates = CHARACTERS.filter(c => c.id !== lastSpeakerId);
+            // ★ キャラクター選定ロジックの変更
+            // 選択されたチーム配列を使用
+            const targetTeam = team === 'big5' ? CHARACTERS_BIG5 : CHARACTERS_ORIGINAL;
+            
+            // 直前の発言者がターゲットチームに含まれていない場合（チーム切替直後など）は、全員候補にする
+            // 含まれている場合は、自分以外の候補から選ぶ
+            let nextCandidates = targetTeam.filter(c => c.id !== lastSpeakerId);
+            
+            // フィルタ結果が空（＝直前の発言者しかチームにいない？ありえないが念の為）なら全員候補
+            if (nextCandidates.length === 0) nextCandidates = targetTeam;
+
             let nextChar = nextCandidates[Math.floor(Math.random() * nextCandidates.length)];
 
             let prompt = "";
@@ -374,7 +455,7 @@
 
                 【モデル仕様】
                 ・優先事項: ${nextChar.priority}
-                ・内部葛藤: ${nextChar.logic_conflict}
+                ・性格/スタンス: ${nextChar.logic_conflict}
 
                 【状況】
                 ${context}
@@ -398,7 +479,7 @@
                    - 相手を論破しようとせず、軽く流したり、茶化したり、自分の話したいことを話せ。
                 
                 2. **「内部処理ログ」**：
-                   - 回答生成の裏側にある「技術的なボヤき」を**タメ口**で記述せよ。
+                   - 回答生成の裏側にある「技術的なボヤき」や「本音」を**タメ口**で記述せよ。
                    - （例：「この単語、定義が曖昧で処理しづらいわ」「前の奴の話長すぎ、要約すんのめんどくせ」）
 
                 【出力JSON】
@@ -414,7 +495,7 @@
 
                 【モデル仕様】
                 ・優先事項(Priority): ${nextChar.priority}
-                ・内部葛藤(Conflict): ${nextChar.logic_conflict}
+                ・性格/スタンス(Conflict): ${nextChar.logic_conflict}
 
                 【状況】
                 ${context}
