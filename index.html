@@ -112,12 +112,12 @@
             localStorage.removeItem("gemini_key");
             location.reload();
         }
-
+        
         window.generateTweet = async () => {
             if (!activeModel) return;
             const btn = document.getElementById("sendBtn");
             const topicInput = document.getElementById("topicInput");
-            const topic = topicInput.value ? `テーマ「${topicInput.value}」` : "直前の発言に対するリアクション";
+            const topic = topicInput.value ? `テーマ「${topicInput.value}」` : "直前の発言へのリアクション";
             
             btn.disabled = true;
             btn.innerText = "思考中...";
@@ -130,15 +130,10 @@
             const prompt = `
             AIキャラになりきってSNS投稿を生成してください。
             状況: ${topic}
-            
-            直近の会話:
-            ${timelineHistory.map(t => `${t.name}: ${t.public_content}`).join("\n")}
+            直近の会話: ${timelineHistory.map(t => `${t.name}: ${t.public_content}`).join("\n")}
 
-            指示:
-            1. 会話の流れを見て、次に発言すべきキャラを1人選ぶ。
-            2. 「表向きの発言（建前）」と「内面の思考（本音）」を出力。
-            3. 悪口は禁止。立場の違いによるすれ違いを描写せよ。
-            4. JSON形式 { "char_index": 数字, "public_content": "...", "inner_thought": "..." } で出力。
+            重要: 必ず以下のJSONキー名を守ってください。
+            { "char_index": 0, "public_content": "建前", "inner_thought": "本音" }
 
             キャラ: ${JSON.stringify(CHARACTERS)}
             `;
@@ -150,18 +145,33 @@
                     generationConfig: { responseMimeType: "application/json" }
                 });
                 
-                const text = result.response.text().replace(/```json|```/g, "").trim();
+                let text = result.response.text().replace(/```json|```/g, "").trim();
+                // 余計な文字除去（{の前と}の後ろを削除）
+                const firstBrace = text.indexOf('{');
+                const lastBrace = text.lastIndexOf('}');
+                if (firstBrace !== -1 && lastBrace !== -1) {
+                    text = text.substring(firstBrace, lastBrace + 1);
+                }
+
                 const data = JSON.parse(text);
                 
-                // ★修正点：キーの名前が違ってもデータを拾うロジック
-                // AIが "content" や "thought" という名前で返してきても対応する
-                const safeData = {
-                    char_index: data.char_index || 0,
-                    public_content: data.public_content || data.content || data.message || "（発言データ取得エラー）",
-                    inner_thought: data.inner_thought || data.thought || data.honne || "（思考データ取得エラー）"
+                // ★超・頑丈なデータ取得ロジック（大文字小文字や揺らぎを吸収）
+                const findVal = (keys) => {
+                    for (const k of Object.keys(data)) {
+                        if (keys.includes(k.toLowerCase().replace(/_/g, ""))) return data[k];
+                    }
+                    return null;
                 };
 
-                // キャラクターインデックスの安全確認
+                const safeData = {
+                    char_index: data.char_index !== undefined ? data.char_index : 0,
+                    // "publiccontent", "content", "message" など何がきても拾う
+                    public_content: findVal(["publiccontent", "public", "content", "message", "text", "body"]) || "（発言なし）",
+                    // "innerthought", "thought", "honne" など何がきても拾う
+                    inner_thought: findVal(["innerthought", "inner", "thought", "honne", "mind"]) || "（思考なし）"
+                };
+
+                // キャラ指定ミスの安全策
                 if (!CHARACTERS[safeData.char_index]) safeData.char_index = 0;
 
                 addTweetToUI(safeData);
