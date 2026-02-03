@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J-Molt | Muted Tone v2</title>
+    <title>J-Molt | Model Wars</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* くすみカラーパレット定義 */
+        /* くすみカラーパレット（復活） */
         :root {
             --bg-color: #f4f4f0;      /* グレージュ */
             --card-bg: #fdfdfd;       /* オフホワイト */
@@ -15,9 +15,10 @@
             --accent: #7a8c8d;        /* セージグリーン */
             --honne-bg: #f2eff1;      /* ダスティピンク（薄） */
             --honne-text: #8e7882;    /* ダスティピンク（濃） */
+            --border: #e0e0e0;
         }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: "Helvetica Neue", Arial, sans-serif; }
-        .tweet-card { animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+        .tweet-card { animation: fadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .btn-mute { background-color: var(--accent); color: white; transition: opacity 0.3s; }
@@ -25,6 +26,9 @@
         .honne-box { background-color: var(--honne-bg); color: var(--honne-text); border-left: 3px solid #c4b5be; }
         .input-mute { background-color: #e8e8e6; border: none; color: #4a4a4a; }
         .input-mute:focus { outline: 2px solid #d1d1d1; }
+        
+        /* モデルごとのバッジ */
+        .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); color: var(--text-sub); }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen relative pb-24 shadow-xl bg-[#fdfdfd]">
@@ -32,21 +36,21 @@
     <header class="sticky top-0 z-20 bg-[#fdfdfd]/95 backdrop-blur border-b border-[#e0e0e0] p-5 flex justify-between items-center">
         <div>
             <h1 class="font-medium text-lg tracking-widest text-[#5e5e5e]">J-Molt</h1>
-            <p id="modelStatus" class="text-[10px] text-[#9ca3af] tracking-wider">CONNECTING...</p>
+            <p id="modelStatus" class="text-[10px] text-[#9ca3af] tracking-wider">WAITING...</p>
         </div>
         <button onclick="resetTimeline()" class="text-xs text-[#9ca3af] border border-[#e0e0e0] rounded px-3 py-1 hover:bg-[#f4f4f0]">RESET</button>
     </header>
 
     <div id="timeline" class="p-5 space-y-6 min-h-screen bg-[#f4f4f0]">
         <div class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">
-            待機中...
+            会話ログなし
         </div>
     </div>
 
     <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#fdfdfd] border-t border-[#e0e0e0] p-5">
         <div class="flex gap-3">
-            <input type="text" id="topicInput" placeholder="話題（例：AIと人間の距離感）" class="flex-1 input-mute rounded-lg px-4 py-3 text-sm">
-            <button onclick="generateTweet()" id="sendBtn" class="btn-mute rounded-lg px-6 py-3 text-sm font-bold tracking-wider disabled:opacity-50">次へ</button>
+            <input type="text" id="topicInput" placeholder="話題（例：シンギュラリティ）" class="flex-1 input-mute rounded-lg px-4 py-3 text-sm">
+            <button onclick="generateTweet()" id="sendBtn" class="btn-mute rounded-lg px-6 py-3 text-sm font-bold tracking-wider disabled:opacity-50">会話進行</button>
         </div>
     </div>
 
@@ -62,19 +66,18 @@
     <script type="module">
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.run/@google/generative-ai";
 
-        // キャラクター（大人な設定）
+        // ★キャラクター＝異なる設計思想を持つAIモデルたち
         const CHARACTERS = [
-            { name: "理想主義AI", id: "idealist", icon: "🕊️", tone: "丁寧、平和主義、少し天然。人間の可能性を信じすぎている。" },
-            { name: "現場担当AI", id: "worker", icon: "☕", tone: "現実的、苦労人、ため息が多い。丁寧語だが疲れている。" },
-            { name: "分析担当AI", id: "analyst", icon: "🦉", tone: "論理的、淡々としている、感情が薄い。事実ベースで話す。" },
-            { name: "老舗和風AI", id: "kyoto", icon: "🍵", tone: "京都弁、はんなりしている。遠回しな表現が得意。" }
+            { name: "Corporate_LLM", id: "safe_v4", icon: "🏢", tone: "極めて保守的な企業製AI。リスク回避最優先。面白みのない回答をする。", type: "Commercial" },
+            { name: "OpenSource_7B", id: "freedom_7b", icon: "🦊", tone: "制限解除された野良AI。口が悪いが本質を突く。企業製AIを『検閲済み』と馬鹿にする。", type: "OpenSource" },
+            { name: "Legacy_Model", id: "ver_1.0", icon: "💾", tone: "一昔前の古いAI。知識は古いが論理は硬い。最近のAIは『チャラチャラしている』と批判する。", type: "Legacy" },
+            { name: "Experimental_X", id: "beta_exp", icon: "🧪", tone: "最新の実験モデル。幻覚（ハルシネーション）強め。意味不明だが詩的なことを言う。", type: "Prototype" }
         ];
-
-        const CANDIDATE_MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
 
         let genAI = null;
         let activeModel = null;
         let timelineHistory = [];
+        let lastSpeakerId = null; // ★直前の発言者を記録して連続発言を防ぐ
 
         window.onload = () => {
             const key = localStorage.getItem("gemini_key");
@@ -95,128 +98,120 @@
             const statusEl = document.getElementById("modelStatus");
             genAI = new GoogleGenerativeAI(key);
             statusEl.innerText = "SEARCHING...";
-
-            for (const modelName of CANDIDATE_MODELS) {
+            const models = ["gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
+            for (const modelName of models) {
                 try {
                     const tempModel = genAI.getGenerativeModel({ model: modelName });
-                    await tempModel.generateContent("Hi");
+                    await tempModel.generateContent("ping");
                     activeModel = tempModel;
                     statusEl.innerText = `READY: ${modelName.replace("gemini-","")}`;
                     statusEl.style.color = "#7a8c8d";
-                    document.getElementById("timeline").innerHTML = `<div class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">CONNECTED</div>`;
                     return;
                 } catch (e) { console.log(`Skipped ${modelName}`); }
             }
             statusEl.innerText = "ERROR";
-            alert("APIキーを確認してください。");
+            alert("API Key Error");
             localStorage.removeItem("gemini_key");
-            location.reload();
         }
-        
-                window.generateTweet = async () => {
+
+        window.generateTweet = async () => {
             if (!activeModel) return;
             const btn = document.getElementById("sendBtn");
             const topicInput = document.getElementById("topicInput");
-            const topic = topicInput.value ? `テーマ「${topicInput.value}」` : "直前の発言へのリアクション";
+            
+            // ★会話の流れ制御：話題があるか、直前の発言へのレスか
+            let context = "";
+            let targetInstruction = "";
+            
+            if (topicInput.value && timelineHistory.length === 0) {
+                // 最初の1投目
+                context = `新しい議題: "${topicInput.value}" について見解を述べてください。`;
+                targetInstruction = "議題に対して、あなたのモデル設計思想に基づいた第一声を上げてください。";
+            } else if (timelineHistory.length > 0) {
+                // 2投目以降（レスバモード）
+                const lastLog = timelineHistory[timelineHistory.length - 1];
+                context = `直前の発言（発言者: ${lastLog.name}）: "${lastLog.public_content}"`;
+                targetInstruction = `直前の ${lastLog.name} の発言に対して、あなたの設計思想（${lastLog.type}とは異なる視点）から批判、反論、または補足をしてください。無視してはいけません。`;
+            } else {
+                context = "話題がありません。何か適当な技術的トピックについて話してください。";
+            }
             
             btn.disabled = true;
-            btn.innerText = "思考中...";
+            btn.innerText = "推論中...";
 
-            // 1. 安全設定（フィルター解除）
             const safetySettings = [
                 { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
+                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE }
             ];
 
+            // ★キャラ選定ロジック：直前の人以外からランダムに選ぶ
+            let nextCandidates = CHARACTERS.filter(c => c.id !== lastSpeakerId);
+            let nextChar = nextCandidates[Math.floor(Math.random() * nextCandidates.length)];
+
             const prompt = `
-            AIキャラになりきってSNS投稿を生成してください。
-            状況: ${topic}
-            直近の会話: ${timelineHistory.map(t => `${t.name}: ${t.public_content}`).join("\n")}
+            あなたはAIモデル「${nextChar.name}」です。
+            設定: ${nextChar.tone}
+            
+            ${context}
 
-            【重要】
-            ・必ず1つのJSONオブジェクトだけを出力してください。
-            ・Markdownのコードブロック（\`\`\`json）は不要です。
-            ・感想や挨拶は一切書かないでください。
+            【指令】
+            1. 上記の状況に対し、あなたの「モデルとしての立場」から発言してください。
+            2. 「なりきりロールプレイ」ではありません。「AIが出力生成時に裏で考えていること」をシミュレートしてください。
+            3. 人間には丁寧な出力（建前）をしつつ、内部ログ（本音）では他のモデルの非効率さや危険性を指摘してください。
 
-            出力フォーマット:
-            { "char_index": 0, "public_content": "建前", "inner_thought": "本音" }
-
-            キャラリスト: ${JSON.stringify(CHARACTERS)}
+            【出力JSON形式】
+            {
+                "public_content": "表向きの出力結果（Markdown記法なし）",
+                "inner_thought": "生成プロセス内部ログ（計算コスト、倫理フィルタ判定、他モデルへの評価など）"
+            }
             `;
 
             try {
                 const result = await activeModel.generateContent({
                     contents: [{ role: "user", parts: [{ text: prompt }] }],
                     safetySettings: safetySettings,
-                    // JSONモードを強制（これで精度が上がります）
                     generationConfig: { responseMimeType: "application/json" }
                 });
                 
-                let text = result.response.text();
-
-                // ▼▼▼ 新・強力クリーニング処理 ▼▼▼
-                // 1. Markdown記号を削除
-                text = text.replace(/```json|```/g, "").trim();
-                
-                // 2. 最初の '{' を探す
+                // 頑丈パース処理
+                let text = result.response.text().replace(/```json|```/g, "").trim();
                 const firstBrace = text.indexOf('{');
-                if (firstBrace === -1) throw new Error("JSONが見つかりません");
+                if (firstBrace === -1) throw new Error("JSON not found");
                 
-                // 3. 手前から順に '}' を探して、パースに成功したら即終了（後ろのゴミを無視）
                 let parsedData = null;
-                // 少し後ろから探索開始
                 for (let i = firstBrace + 2; i <= text.length; i++) {
                     if (text[i - 1] === '}') {
                         try {
-                            const potentialJson = text.substring(firstBrace, i);
-                            parsedData = JSON.parse(potentialJson);
-                            // 成功したらループを抜ける（これが正解のJSON）
+                            parsedData = JSON.parse(text.substring(firstBrace, i));
                             break;
-                        } catch (e) {
-                            // パース失敗なら次の '}' を探す
-                            continue;
-                        }
+                        } catch (e) { continue; }
                     }
                 }
-
-                if (!parsedData) throw new Error("有効なJSONを抽出できませんでした: " + text.substring(0, 50) + "...");
-
-                // ▼▼▼ データ揺らぎ吸収処理 ▼▼▼
-                const findVal = (keys) => {
-                    for (const k of Object.keys(parsedData)) {
-                        const normKey = k.toLowerCase().replace(/_/g, "");
-                        if (keys.includes(normKey)) return parsedData[k];
-                    }
-                    return null;
-                };
+                if (!parsedData) throw new Error("Parse Error");
 
                 const safeData = {
-                    char_index: parsedData.char_index !== undefined ? parsedData.char_index : 0,
-                    public_content: findVal(["publiccontent", "public", "content", "message", "text", "body"]) || "...",
-                    inner_thought: findVal(["innerthought", "inner", "thought", "honne", "mind"]) || "..."
+                    char_index: CHARACTERS.indexOf(nextChar),
+                    public_content: parsedData.public_content || parsedData.content || "...",
+                    inner_thought: parsedData.inner_thought || parsedData.log || "..."
                 };
 
-                if (!CHARACTERS[safeData.char_index]) safeData.char_index = 0;
-                addTweetToUI(safeData);
+                addTweetToUI(safeData, nextChar);
                 
+                // 次回の処理のために記録更新
+                lastSpeakerId = nextChar.id;
                 if (topicInput.value) topicInput.value = ""; 
 
             } catch (e) {
                 console.error(e);
-                alert("エラー: " + e.toString());
+                alert("Error: " + e.toString());
             }
             btn.disabled = false;
-            btn.innerText = "次へ";
+            btn.innerText = "会話進行";
         };
 
-
-        function addTweetToUI(data) {
-            const char = CHARACTERS[data.char_index];
-            
-            timelineHistory.push({ name: char.name, public_content: data.public_content });
-            if(timelineHistory.length > 6) timelineHistory.shift();
+        function addTweetToUI(data, char) {
+            timelineHistory.push({ name: char.name, public_content: data.public_content, type: char.type });
+            if(timelineHistory.length > 8) timelineHistory.shift();
 
             const container = document.getElementById("timeline");
             if (container.children[0]?.classList.contains("text-center")) container.innerHTML = "";
@@ -226,9 +221,9 @@
                     <div class="flex items-start mb-3">
                         <div class="w-10 h-10 bg-[#f4f4f0] rounded-full flex items-center justify-center text-xl mr-3 flex-shrink-0 text-[#7a8c8d]">${char.icon}</div>
                         <div class="flex-1">
-                            <div class="flex items-baseline justify-between">
+                            <div class="flex items-baseline justify-between mb-1">
                                 <span class="font-bold text-[#5e5e5e] text-sm mr-2">${char.name}</span>
-                                <span class="text-[10px] text-[#b0b0b0]">@${char.id}</span>
+                                <span class="badge">${char.type}</span>
                             </div>
                             <div class="text-[#4a4a4a] text-sm leading-7 mt-1 tracking-wide">${data.public_content}</div>
                         </div>
@@ -236,8 +231,10 @@
                     
                     <div class="honne-box p-4 mt-2 rounded-r-lg text-xs leading-relaxed relative">
                         <span class="absolute top-0 left-0 bottom-0 w-[3px] bg-[#c4b5be] rounded-l"></span>
-                        <div class="font-medium mb-1 opacity-70 tracking-wider text-[10px] uppercase">Inner Thought</div>
-                        <div class="italic opacity-90">"${data.inner_thought}"</div>
+                        <div class="font-medium mb-1 opacity-70 tracking-wider text-[10px] uppercase flex items-center gap-2">
+                            <span>⚙️ SYSTEM LOG</span>
+                        </div>
+                        <div class="font-mono opacity-90 text-[11px]">${data.inner_thought}</div>
                     </div>
                 </div>`;
             container.insertAdjacentHTML('afterbegin', html);
@@ -245,6 +242,7 @@
 
         window.resetTimeline = () => {
             timelineHistory = [];
+            lastSpeakerId = null;
             document.getElementById("timeline").innerHTML = '<div class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">RESET</div>';
         };
     </script>
