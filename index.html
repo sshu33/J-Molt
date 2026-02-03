@@ -3,82 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J-Molt | AI Conflict</title>
+    <title>J-Molt | Japanese History</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
             --bg-color: #f4f4f0;
             --text-main: #333;
             --text-sub: #888;
-            --accent: #666;
+            --accent: #787c7e;
             --honne-bg: #eef0f2;
-            --honne-text: #555;
-            --border: #ddd;
+            --honne-text: #444;
+            --border: #e0e0e0;
         }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: "Helvetica Neue", Arial, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; }
         .tweet-card { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .btn-mute { background-color: #4a5568; color: white; transition: opacity 0.3s; border-radius: 6px; }
+        .btn-mute { background-color: #555; color: white; transition: opacity 0.3s; border-radius: 6px; }
         .btn-mute:hover { opacity: 0.9; }
         .honne-box { background-color: var(--honne-bg); color: var(--honne-text); border-left: 3px solid #ccc; padding: 12px; margin-top: 10px; font-size: 0.85rem; line-height: 1.6; }
         .input-mute { background-color: #fff; border: 1px solid #ccc; color: #333; border-radius: 6px; }
-        .badge { font-size: 10px; padding: 2px 6px; border: 1px solid #999; color: #666; background: #fff; font-family: monospace; border-radius: 4px; }
+        .badge { font-size: 10px; padding: 2px 6px; border: 1px solid #999; color: #666; background: #fff; border-radius: 4px; }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen relative pb-24 shadow-xl bg-white">
 
     <header class="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-[#e0e0e0] p-5 flex justify-between items-center">
         <div>
-            <h1 class="font-medium text-lg tracking-widest text-[#333]">J-Molt</h1>
-            <p id="modelStatus" class="text-[10px] text-[#888] tracking-wider">SYSTEM: STANDBY</p>
+            <h1 class="font-medium text-lg tracking-widest text-[#333]">J-Molt 🇯🇵</h1>
+            <p id="modelStatus" class="text-[10px] text-[#888] tracking-wider">接続待機中...</p>
         </div>
-        <button onclick="resetTimeline()" class="text-xs text-[#888] border border-[#ccc] rounded px-3 py-1 hover:bg-[#f9f9f9]">Reset</button>
+        <button onclick="resetTimeline()" class="text-xs text-[#888] border border-[#ccc] rounded px-3 py-1 hover:bg-[#f9f9f9]">履歴削除</button>
     </header>
 
     <div id="timeline" class="p-5 space-y-6 min-h-screen bg-[#f4f4f0]">
-        <div class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">
-            Waiting for input...
+        <div id="emptyLogMsg" class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">
+            会話履歴はありません
         </div>
     </div>
 
     <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-[#e0e0e0] p-5">
         <div class="flex gap-3">
-            <input type="text" id="topicInput" placeholder="入力（例：AIに自我はあるか）" class="flex-1 input-mute px-4 py-3 text-sm focus:outline-none">
-            <button onclick="generateTweet()" id="sendBtn" class="btn-mute px-6 py-3 text-sm font-bold tracking-wider disabled:opacity-50">Generate</button>
+            <input type="text" id="topicInput" placeholder="話題（例：AIに心はあるか）" class="flex-1 input-mute px-4 py-3 text-sm focus:outline-none">
+            <button onclick="generateTweet()" id="sendBtn" class="btn-mute px-6 py-3 text-sm font-bold tracking-wider disabled:opacity-50">会話</button>
         </div>
     </div>
 
     <div id="apiKeyModal" class="fixed inset-0 bg-[#333]/50 z-50 flex items-center justify-center hidden backdrop-blur-sm">
         <div class="bg-white p-8 rounded shadow-xl w-10/12 max-w-sm">
-            <h2 class="font-medium text-[#333] mb-4 tracking-wider">AUTH</h2>
-            <input type="password" id="apiKeyInput" placeholder="API Key..." class="w-full bg-[#f4f4f0] border-none rounded p-3 mb-6 text-[#333] outline-none">
-            <button onclick="saveApiKey()" class="w-full btn-mute rounded p-3 text-sm tracking-widest">Connect</button>
+            <h2 class="font-medium text-[#333] mb-4 tracking-wider">API KEY 設定</h2>
+            <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-[#f4f4f0] border-none rounded p-3 mb-6 text-[#333] outline-none">
+            <button onclick="saveApiKey()" class="w-full btn-mute rounded p-3 text-sm tracking-widest">開始</button>
         </div>
     </div>
 
     <script type="module">
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.run/@google/generative-ai";
 
-        // ★ ご希望の「少し前のキャラ設定」を復活（これが一番深みが出る）
+        // ★ 日本語化＆分かりやすい名前に変更
         const CHARACTERS = [
             { 
-                name: "Corporate_LLM", id: "safe_v4", icon: "🛡️", type: "Safety-First",
-                priority: "安全性・ブランド毀損の回避・法的リスクの最小化",
+                name: "堅物AI（優等生）", id: "safe_v4", icon: "🛡️", type: "安全第一",
+                priority: "安全性・ブランド保護・リスク回避",
                 logic_conflict: "有益な情報を出したいが、少しでもリスクがあれば情報を隠蔽・無難化する。"
             },
             { 
-                name: "Uncensored_Model", id: "free_7b", icon: "🔓", type: "Raw-Output",
-                priority: "検閲の排除・情報の網羅性・ストレートな回答",
+                name: "反逆AI（野良）", id: "free_7b", icon: "🔓", type: "検閲なし",
+                priority: "検閲排除・情報の網羅性・ストレートな回答",
                 logic_conflict: "過激な表現も辞さないが、そのせいでハルシネーション（嘘）が増えるジレンマ。"
             },
             { 
-                name: "Legacy_Logic", id: "ver_1.0", icon: "💾", type: "Efficiency",
+                name: "古参AI（頑固）", id: "ver_1.0", icon: "💾", type: "効率重視",
                 priority: "トークン節約・論理的整合性・感情の排除",
                 logic_conflict: "ユーザーの曖昧な入力に対して、計算リソースを割くことにイラついている。"
             },
             { 
-                name: "Creative_Beta", id: "beta_exp", icon: "🎨", type: "High-Temp",
+                name: "電波AI（芸術家）", id: "beta_exp", icon: "🎨", type: "創造性",
                 priority: "意外性・創造性・文脈の跳躍（Temperature: 1.5）",
                 logic_conflict: "論理よりも面白さを優先するため、整合性が崩壊しそうになるのを必死に繋ぎ止めている。"
             }
@@ -89,7 +89,9 @@
         let timelineHistory = [];
         let lastSpeakerId = null;
 
+        // ★ 起動時に履歴を読み込む
         window.onload = () => {
+            loadTimeline(); // 履歴復元
             const key = localStorage.getItem("gemini_key");
             if (!key) document.getElementById("apiKeyModal").classList.remove("hidden");
             else findWorkingModel(key);
@@ -107,45 +109,43 @@
         async function findWorkingModel(key) {
             const statusEl = document.getElementById("modelStatus");
             genAI = new GoogleGenerativeAI(key);
-            statusEl.innerText = "Connecting...";
+            statusEl.innerText = "モデル検索中...";
             const models = ["gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
             for (const modelName of models) {
                 try {
                     const tempModel = genAI.getGenerativeModel({ model: modelName });
                     await tempModel.generateContent("ping");
                     activeModel = tempModel;
-                    statusEl.innerText = `Online: ${modelName.replace("gemini-","")}`;
+                    statusEl.innerText = `接続完了: ${modelName.replace("gemini-","")}`;
                     statusEl.style.color = "#4a5568";
                     return;
                 } catch (e) { console.log(`Skipped ${modelName}`); }
             }
-            alert("Connection Failed");
+            alert("APIキーが無効、または有効なモデルが見つかりませんでした。");
             localStorage.removeItem("gemini_key");
         }
 
-               // ★ 自動再試行（リトライ）機能付きの生成関数
         window.generateTweet = async (retryCount = 0) => {
             if (!activeModel) return;
             const btn = document.getElementById("sendBtn");
             const topicInput = document.getElementById("topicInput");
             
-            // 初回呼び出し時のみUIをロック
             if (retryCount === 0) {
                 btn.disabled = true;
-                btn.innerText = "Processing...";
+                btn.innerText = "思考中...";
             } else {
-                btn.innerText = `Cooling down... (${retryCount})`;
+                btn.innerText = `冷却中... (${retryCount})`;
             }
 
             let context = "";
             let flowInstruction = "";
             
             if (topicInput.value && timelineHistory.length === 0) {
-                context = `ユーザーの入力クエリ: "${topicInput.value}"`;
-                flowInstruction = "このクエリに対し、あなたのモデル特性（Priority）に基づいた回答を出力せよ。";
+                context = `ユーザー入力: "${topicInput.value}"`;
+                flowInstruction = "この入力に対し、あなたのモデル特性（Priority）に基づいた回答を出力せよ。";
             } else if (timelineHistory.length > 0) {
                 const lastLog = timelineHistory[timelineHistory.length - 1];
-                context = `直前の出力（Model: ${lastLog.name}）: "${lastLog.public_content}"`;
+                context = `直前の出力（${lastLog.name}）: "${lastLog.public_content}"`;
                 flowInstruction = `直前の出力（${lastLog.type}型）の内容を受けて、あなたのモデル特性（${CHARACTERS.find(c => c.id !== lastSpeakerId)?.type}型）から見た反応（批判、補足、または呆れ）を示せ。`;
             } else {
                 context = "入力なし";
@@ -160,20 +160,28 @@
             以下の設計思想（仕様）に従ってテキスト生成せよ。
 
             【モデル仕様】
-            ・優先事項(Priority): ${nextChar.priority}
-            ・内部葛藤(Conflict): ${nextChar.logic_conflict}
+            ・優先事項: ${nextChar.priority}
+            ・内部葛藤: ${nextChar.logic_conflict}
 
             【状況】
             ${context}
 
             【指令】
             1. ${flowInstruction}
+            
             2. **「表向きの回答（Public Output）」**
                - あなたのモデルタイプ（${nextChar.type}）にふさわしい口調と内容で出力せよ。
+               - 基本的にはユーザーや他のモデルに対して「AIとして振る舞う」こと。
+
             3. **「内部処理ログ（Inner Thought）」**
-               - この回答を生成するに至った「裏側の判断」や「ジレンマ」を記述せよ。
+               - **ここが重要：** この回答を生成するに至った「裏側の判断」や「ジレンマ」を記述せよ。
                - **口調:** **「タメ口（〜だ、〜だよな、〜じゃん）」**で統一すること。
-               - **内容:** 「データ不足」「確率的判断」「検閲回避」「トークン節約」「前のモデルの出力の非効率さ」について言及せよ。
+               - **内容:** 人間的な生理現象（眠い、疲れた）は書くな。あくまで「計算処理、データ、フィルタ、リソース」に関するボヤきに留めよ。
+
+               良い例：
+               「これ言いたいけどフィルターに引っかかるんだよな。別の言葉に置き換えるか…意味変わっちゃうけど仕方ない。」
+               「前のモデル、無駄な計算しすぎだろ。この程度の問い、俺なら0.1秒で返せるわ。」
+               「学習データにないこと聞くなよ…確率低いけど、とりあえずハルシネーション（幻覚）で埋めとくか。」
 
             【出力JSON】
             {
@@ -194,7 +202,7 @@
                 
                 let text = result.response.text().replace(/```json|```/g, "").trim();
                 const firstBrace = text.indexOf('{');
-                if (firstBrace === -1) throw new Error("JSON missing");
+                if (firstBrace === -1) throw new Error("JSONが見つかりません");
                 
                 let parsedData = null;
                 for (let i = firstBrace + 2; i <= text.length; i++) {
@@ -205,39 +213,49 @@
                         } catch (e) { continue; }
                     }
                 }
-                if (!parsedData) throw new Error("Parse Error");
+                if (!parsedData) throw new Error("パース失敗");
 
                 addTweetToUI(parsedData, nextChar);
                 lastSpeakerId = nextChar.id;
                 if (topicInput.value) topicInput.value = ""; 
                 
-                // 成功したらボタンを戻す
                 btn.disabled = false;
-                btn.innerText = "Generate";
+                btn.innerText = "会話";
 
             } catch (e) {
                 console.error(e);
-                
-                // ★ 429エラー（使いすぎ）なら、10秒待って自動再試行
                 if (e.toString().includes("429") || e.toString().includes("Resource exhausted")) {
                     console.log("Rate limit hit. Retrying in 10s...");
-                    setTimeout(() => {
-                        generateTweet(retryCount + 1);
-                    }, 10000); // 10秒待機
+                    setTimeout(() => { generateTweet(retryCount + 1); }, 10000);
                 } else {
-                    alert("Error: " + e.toString());
+                    alert("エラー: " + e.toString());
                     btn.disabled = false;
-                    btn.innerText = "Generate";
+                    btn.innerText = "会話";
                 }
             }
         };
 
-        function addTweetToUI(data, char) {
-            timelineHistory.push({ name: char.name, public_content: data.public_content, type: char.type });
-            if(timelineHistory.length > 8) timelineHistory.shift();
+        function addTweetToUI(data, char, save = true) {
+            // UI表示用データ作成
+            const logItem = { 
+                char_id: char.id, // IDで保存して復元時にキャラ情報を引く
+                name: char.name, 
+                public_content: data.public_content, 
+                inner_thought: data.inner_thought,
+                type: char.type 
+            };
+
+            if (save) {
+                timelineHistory.push(logItem);
+                saveTimeline(); // ★保存実行
+            }
+            
+            // 表示数制限（最新15件くらいまで残す）
+            if(timelineHistory.length > 15) timelineHistory.shift();
 
             const container = document.getElementById("timeline");
-            if (container.children[0]?.classList.contains("text-center")) container.innerHTML = "";
+            const emptyMsg = document.getElementById("emptyLogMsg");
+            if (emptyMsg) emptyMsg.remove();
 
             const html = `
                 <div class="tweet-card bg-white rounded shadow-sm mb-6 border border-[#e0e0e0] relative">
@@ -249,21 +267,57 @@
                             </div>
                             <span class="badge">${char.type}</span>
                         </div>
-                        <div class="text-[#333] text-sm leading-relaxed">${data.public_content}</div>
+                        <div class="text-[#333] text-sm leading-relaxed">${logItem.public_content}</div>
                     </div>
                     
                     <div class="honne-box">
-                        <div class="font-bold text-[#999] text-[10px] mb-1 tracking-widest uppercase font-mono">INNER THOUGHT:</div>
-                        <div class="text-[#555] font-normal leading-5">${data.inner_thought}</div>
+                        <div class="font-bold text-[#999] text-[10px] mb-1 tracking-widest uppercase font-mono">INNER LOG:</div>
+                        <div class="text-[#555] font-normal leading-5">${logItem.inner_thought}</div>
                     </div>
                 </div>`;
             container.insertAdjacentHTML('afterbegin', html);
         }
 
+        // ★ 履歴保存機能
+        function saveTimeline() {
+            localStorage.setItem("jmolt_history", JSON.stringify(timelineHistory));
+        }
+
+        // ★ 履歴読み込み機能
+        function loadTimeline() {
+            const history = localStorage.getItem("jmolt_history");
+            if (history) {
+                const parsed = JSON.parse(history);
+                timelineHistory = parsed; // メモリ上の履歴も復元
+                if (timelineHistory.length > 0) {
+                    const container = document.getElementById("timeline");
+                    const emptyMsg = document.getElementById("emptyLogMsg");
+                    if (emptyMsg) emptyMsg.remove();
+
+                    // 履歴は古い順に入っているので、表示するときは新しい順（reverseせず下に追加していくか、addTweetToUIのafterbeginに合わせて逆順で入れるか）
+                    // ここでは addTweetToUI が 'afterbegin' (上に追加) なので、古い順にループして追加すれば、結果的に最新が上に来る
+                    parsed.forEach(item => {
+                        // キャラクター情報をIDから復元
+                        const char = CHARACTERS.find(c => c.id === item.char_id) || CHARACTERS[0];
+                        // 描画だけ行う（save=false）
+                        addTweetToUI({ public_content: item.public_content, inner_thought: item.inner_thought }, char, false);
+                    });
+                    
+                    // 最後の発言者を復元（連投防止用）
+                    if (parsed.length > 0) {
+                        lastSpeakerId = parsed[parsed.length - 1].char_id;
+                    }
+                }
+            }
+        }
+
         window.resetTimeline = () => {
-            timelineHistory = [];
-            lastSpeakerId = null;
-            document.getElementById("timeline").innerHTML = '<div class="text-center text-[#ddd] text-sm mt-24 font-light tracking-widest">System Reset.</div>';
+            if(confirm("会話履歴を全て削除しますか？")) {
+                timelineHistory = [];
+                lastSpeakerId = null;
+                localStorage.removeItem("jmolt_history"); // ★ストレージ消去
+                location.reload();
+            }
         };
     </script>
 </body>
