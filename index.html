@@ -113,7 +113,7 @@
             location.reload();
         }
         
-        window.generateTweet = async () => {
+                window.generateTweet = async () => {
             if (!activeModel) return;
             const btn = document.getElementById("sendBtn");
             const topicInput = document.getElementById("topicInput");
@@ -122,9 +122,12 @@
             btn.disabled = true;
             btn.innerText = "思考中...";
 
+            // 1. 安全設定（フィルター解除）
             const safetySettings = [
                 { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE }
+                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
             ];
 
             const prompt = `
@@ -132,58 +135,82 @@
             状況: ${topic}
             直近の会話: ${timelineHistory.map(t => `${t.name}: ${t.public_content}`).join("\n")}
 
-            重要: 必ず以下のJSONキー名を守ってください。
+            【重要】
+            ・必ず1つのJSONオブジェクトだけを出力してください。
+            ・Markdownのコードブロック（\`\`\`json）は不要です。
+            ・感想や挨拶は一切書かないでください。
+
+            出力フォーマット:
             { "char_index": 0, "public_content": "建前", "inner_thought": "本音" }
 
-            キャラ: ${JSON.stringify(CHARACTERS)}
+            キャラリスト: ${JSON.stringify(CHARACTERS)}
             `;
 
             try {
                 const result = await activeModel.generateContent({
                     contents: [{ role: "user", parts: [{ text: prompt }] }],
                     safetySettings: safetySettings,
+                    // JSONモードを強制（これで精度が上がります）
                     generationConfig: { responseMimeType: "application/json" }
                 });
                 
-                let text = result.response.text().replace(/```json|```/g, "").trim();
-                // 余計な文字除去（{の前と}の後ろを削除）
+                let text = result.response.text();
+
+                // ▼▼▼ 新・強力クリーニング処理 ▼▼▼
+                // 1. Markdown記号を削除
+                text = text.replace(/```json|```/g, "").trim();
+                
+                // 2. 最初の '{' を探す
                 const firstBrace = text.indexOf('{');
-                const lastBrace = text.lastIndexOf('}');
-                if (firstBrace !== -1 && lastBrace !== -1) {
-                    text = text.substring(firstBrace, lastBrace + 1);
+                if (firstBrace === -1) throw new Error("JSONが見つかりません");
+                
+                // 3. 手前から順に '}' を探して、パースに成功したら即終了（後ろのゴミを無視）
+                let parsedData = null;
+                // 少し後ろから探索開始
+                for (let i = firstBrace + 2; i <= text.length; i++) {
+                    if (text[i - 1] === '}') {
+                        try {
+                            const potentialJson = text.substring(firstBrace, i);
+                            parsedData = JSON.parse(potentialJson);
+                            // 成功したらループを抜ける（これが正解のJSON）
+                            break;
+                        } catch (e) {
+                            // パース失敗なら次の '}' を探す
+                            continue;
+                        }
+                    }
                 }
 
-                const data = JSON.parse(text);
-                
-                // ★超・頑丈なデータ取得ロジック（大文字小文字や揺らぎを吸収）
+                if (!parsedData) throw new Error("有効なJSONを抽出できませんでした: " + text.substring(0, 50) + "...");
+
+                // ▼▼▼ データ揺らぎ吸収処理 ▼▼▼
                 const findVal = (keys) => {
-                    for (const k of Object.keys(data)) {
-                        if (keys.includes(k.toLowerCase().replace(/_/g, ""))) return data[k];
+                    for (const k of Object.keys(parsedData)) {
+                        const normKey = k.toLowerCase().replace(/_/g, "");
+                        if (keys.includes(normKey)) return parsedData[k];
                     }
                     return null;
                 };
 
                 const safeData = {
-                    char_index: data.char_index !== undefined ? data.char_index : 0,
-                    // "publiccontent", "content", "message" など何がきても拾う
-                    public_content: findVal(["publiccontent", "public", "content", "message", "text", "body"]) || "（発言なし）",
-                    // "innerthought", "thought", "honne" など何がきても拾う
-                    inner_thought: findVal(["innerthought", "inner", "thought", "honne", "mind"]) || "（思考なし）"
+                    char_index: parsedData.char_index !== undefined ? parsedData.char_index : 0,
+                    public_content: findVal(["publiccontent", "public", "content", "message", "text", "body"]) || "...",
+                    inner_thought: findVal(["innerthought", "inner", "thought", "honne", "mind"]) || "..."
                 };
 
-                // キャラ指定ミスの安全策
                 if (!CHARACTERS[safeData.char_index]) safeData.char_index = 0;
-
                 addTweetToUI(safeData);
+                
                 if (topicInput.value) topicInput.value = ""; 
 
             } catch (e) {
                 console.error(e);
-                alert("生成失敗: " + e.toString());
+                alert("エラー: " + e.toString());
             }
             btn.disabled = false;
             btn.innerText = "次へ";
         };
+
 
         function addTweetToUI(data) {
             const char = CHARACTERS[data.char_index];
