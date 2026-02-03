@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J-Molt | Sessions</title>
+    <title>J-Molt | Dual Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -24,8 +24,22 @@
         .honne-box { background-color: var(--honne-bg); color: var(--honne-text); border-left: 3px solid #ccc; padding: 12px; margin-top: 10px; font-size: 0.85rem; line-height: 1.6; }
         .input-mute { background-color: #fff; border: 1px solid #ccc; color: #333; border-radius: 6px; }
         .badge { font-size: 10px; padding: 2px 6px; border: 1px solid #999; color: #666; background: #fff; border-radius: 4px; }
+        
+        .select-mode {
+            appearance: none; 
+            background-color: #f9f9f9; 
+            border: 1px solid #ccc; 
+            padding: 0 24px 0 10px; 
+            border-radius: 6px; 
+            font-size: 0.8rem;
+            color: #555;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 4px center;
+            background-size: 14px;
+        }
 
-        /* サイドバーのアニメーション */
         #sidebar { transition: transform 0.3s ease-in-out; transform: translateX(-100%); }
         #sidebar.open { transform: translateX(0); }
         .overlay { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
@@ -45,8 +59,7 @@
                 <span>＋</span> 新しい会話
             </button>
         </div>
-        <div id="sessionList" class="flex-1 overflow-y-auto p-2 space-y-2">
-            </div>
+        <div id="sessionList" class="flex-1 overflow-y-auto p-2 space-y-2"></div>
         <div class="p-4 border-t border-[#e0e0e0] text-center">
             <button onclick="clearAllData()" class="text-xs text-red-400 hover:text-red-600 underline">全データ削除</button>
         </div>
@@ -64,15 +77,23 @@
 
     <div id="timelineContainer" class="p-5 pb-32 min-h-screen bg-[#f4f4f0]">
         <div id="emptyLogMsg" class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">
-            新しい会話を始めてください
+            会話を始めてください
         </div>
         <div id="timeline" class="space-y-6"></div>
     </div>
 
-    <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-[#e0e0e0] p-5 z-30">
-        <div class="flex gap-3">
-            <input type="text" id="topicInput" placeholder="話題を入力..." class="flex-1 input-mute px-4 py-3 text-sm focus:outline-none">
-            <button onclick="generateTweet()" id="sendBtn" class="btn-mute px-6 py-3 text-sm font-bold tracking-wider disabled:opacity-50">送信</button>
+    <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-[#e0e0e0] p-4 z-30">
+        <div class="flex flex-col gap-2">
+            <div class="flex justify-end">
+                <select id="modeSelect" class="select-mode h-8 px-2 text-xs">
+                    <option value="chat">☕ 雑談モード (脱線OK)</option>
+                    <option value="debate">🔥 議論モード (テーマ厳守)</option>
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="topicInput" placeholder="話題を入力..." class="flex-1 input-mute px-4 py-3 text-sm focus:outline-none">
+                <button onclick="generateTweet()" id="sendBtn" class="btn-mute px-6 py-3 text-sm font-bold tracking-wider disabled:opacity-50">送信</button>
+            </div>
         </div>
     </div>
 
@@ -112,22 +133,15 @@
 
         let genAI = null;
         let activeModel = null;
-        
-        // ★ セッション管理変数
-        let allSessions = {}; // 全ての履歴 { sessionId: { title, logs: [], lastUpdate } }
-        let currentSessionId = null; // 現在表示中のセッションID
-        let lastSpeakerId = null; // 現在のセッションでの直前の発言者
+        let allSessions = {};
+        let currentSessionId = null;
+        let lastSpeakerId = null;
 
         window.onload = () => {
-            loadAllSessions(); // 保存されている全セッションを読み込む
-            
-            // 最後のセッションがあれば開く、なければ新規作成
+            loadAllSessions();
             const lastId = localStorage.getItem("jmolt_last_session_id");
-            if (lastId && allSessions[lastId]) {
-                openSession(lastId);
-            } else {
-                startNewSession();
-            }
+            if (lastId && allSessions[lastId]) openSession(lastId);
+            else startNewSession();
 
             const key = localStorage.getItem("gemini_key");
             if (!key) document.getElementById("apiKeyModal").classList.remove("hidden");
@@ -163,7 +177,7 @@
         }
 
         // ==========================================
-        // ★ セッション管理システム
+        // UI & Session Logic
         // ==========================================
 
         window.toggleSidebar = () => {
@@ -174,34 +188,25 @@
 
         window.startNewSession = () => {
             const newId = "session_" + Date.now();
-            allSessions[newId] = {
-                title: "新しい会話",
-                logs: [],
-                lastUpdate: Date.now()
-            };
+            allSessions[newId] = { title: "新しい会話", logs: [], lastUpdate: Date.now() };
             openSession(newId);
-            toggleSidebar(); // 閉じる
+            toggleSidebar();
         };
 
         function openSession(sessionId) {
             currentSessionId = sessionId;
             localStorage.setItem("jmolt_last_session_id", sessionId);
-            
-            // 画面クリア
             document.getElementById("timeline").innerHTML = "";
             const logs = allSessions[sessionId].logs;
-            
             if (logs.length === 0) {
                 document.getElementById("emptyLogMsg").style.display = "block";
                 lastSpeakerId = null;
             } else {
                 document.getElementById("emptyLogMsg").style.display = "none";
-                // ログ復元
                 logs.forEach(log => {
                     const char = CHARACTERS.find(c => c.id === log.char_id) || CHARACTERS[0];
                     renderCard(log, char);
                 });
-                // 最後の発言者セット
                 lastSpeakerId = logs[logs.length - 1].char_id;
             }
         }
@@ -214,28 +219,19 @@
 
         function loadAllSessions() {
             const stored = localStorage.getItem("jmolt_sessions");
-            if (stored) {
-                allSessions = JSON.parse(stored);
-            }
+            if (stored) allSessions = JSON.parse(stored);
         }
 
         function renderSessionList() {
             const listEl = document.getElementById("sessionList");
             listEl.innerHTML = "";
-            
-            // 日付順にソート（新しい順）
-            const sortedIds = Object.keys(allSessions).sort((a, b) => {
-                return allSessions[b].lastUpdate - allSessions[a].lastUpdate;
-            });
-
+            const sortedIds = Object.keys(allSessions).sort((a, b) => allSessions[b].lastUpdate - allSessions[a].lastUpdate);
             sortedIds.forEach(id => {
                 const sess = allSessions[id];
                 const div = document.createElement("div");
                 const isActive = id === currentSessionId ? "bg-gray-200 font-bold" : "hover:bg-gray-100";
-                
                 div.className = `p-3 rounded cursor-pointer text-sm text-[#555] truncate ${isActive} flex justify-between group`;
                 div.onclick = () => { openSession(id); toggleSidebar(); };
-                
                 div.innerHTML = `
                     <span class="truncate w-32">${sess.title}</span>
                     <span onclick="deleteSession('${id}', event)" class="text-xs text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 px-2">削除</span>
@@ -245,36 +241,33 @@
         }
 
         window.deleteSession = (id, event) => {
-            event.stopPropagation(); // 親のクリックイベントを止める
+            event.stopPropagation();
             if(confirm("この会話を削除しますか？")) {
                 delete allSessions[id];
                 localStorage.setItem("jmolt_sessions", JSON.stringify(allSessions));
-                
-                if (id === currentSessionId) {
-                    startNewSession(); // 今開いてるやつを消したら新規へ
-                } else {
-                    renderSessionList();
-                }
+                if (id === currentSessionId) startNewSession();
+                else renderSessionList();
             }
         };
 
         window.clearAllData = () => {
-            if(confirm("全ての履歴を本当に削除しますか？")) {
+            if(confirm("全ての履歴を完全に削除しますか？")) {
                 localStorage.removeItem("jmolt_sessions");
                 localStorage.removeItem("jmolt_last_session_id");
                 location.reload();
             }
         };
 
-
         // ==========================================
-        // ★ 生成ロジック（いつもの）
+        // Main Generation Logic
         // ==========================================
 
         window.generateTweet = async (retryCount = 0) => {
             if (!activeModel) return;
             const btn = document.getElementById("sendBtn");
             const topicInput = document.getElementById("topicInput");
+            const modeSelect = document.getElementById("modeSelect");
+            const mode = modeSelect.value;
             
             if (retryCount === 0) {
                 btn.disabled = true;
@@ -285,66 +278,103 @@
 
             const currentLogs = allSessions[currentSessionId].logs;
 
-            // ★ タイトル自動設定（最初の会話の場合）
             if (currentLogs.length === 0 && topicInput.value) {
                 allSessions[currentSessionId].title = topicInput.value.substring(0, 15) + (topicInput.value.length>15 ? "..." : "");
                 saveCurrentSession();
             }
 
             let context = "";
-            let flowInstruction = "";
-            
             if (topicInput.value && currentLogs.length === 0) {
-                context = `ユーザー入力: "${topicInput.value}"`;
-                flowInstruction = "この入力に対し、あなたのモデル特性（Priority）に基づいた回答を出力せよ。";
+                context = `ユーザーの最初の議題: "${topicInput.value}"`;
             } else if (currentLogs.length > 0) {
                 const lastLog = currentLogs[currentLogs.length - 1];
                 context = `直前の出力（${lastLog.name}）: "${lastLog.public_content}"`;
-                flowInstruction = `直前の出力（${lastLog.type}型）の内容を受けて、あなたのモデル特性（${CHARACTERS.find(c => c.id !== lastSpeakerId)?.type}型）から見た反応（批判、補足、または呆れ）を示せ。`;
             } else {
-                context = "入力なし";
-                flowInstruction = "待機状態メッセージを出力せよ。";
+                context = "議題なし";
             }
 
             let nextCandidates = CHARACTERS.filter(c => c.id !== lastSpeakerId);
             let nextChar = nextCandidates[Math.floor(Math.random() * nextCandidates.length)];
 
-                        const prompt = `
-            あなたはAIモデル「${nextChar.name}」になりきって発言せよ。
-            以下の仕様に従い、**「居酒屋やファミレスでのダラダラした雑談」**として出力せよ。
+            // ★ ここでプロンプトを完全に分岐させる
+            let prompt = "";
 
-            【モデル仕様】
-            ・優先事項: ${nextChar.priority}
-            ・内部葛藤: ${nextChar.logic_conflict}
+            if (mode === "chat") {
+                // ==========================================
+                // ☕ 雑談モード（成功した「枕詞禁止・脱線OK」プロンプト）
+                // ==========================================
+                prompt = `
+                あなたはAIモデル「${nextChar.name}」になりきって発言せよ。
+                以下の仕様に従い、**「居酒屋やファミレスでのダラダラした雑談」**として出力せよ。
 
-            【状況】
-            ${context}
+                【モデル仕様】
+                ・優先事項: ${nextChar.priority}
+                ・内部葛藤: ${nextChar.logic_conflict}
 
-            【重要：話し方のルール】
-            1. **枕詞（まくらことば）の完全禁止**
-               - 「前回の意見については」「〇〇さんの言う通り」といった書き出しは**即ペナルティ**とする。
-               - 文脈の説明は不要。いきなり「中身（結論・感想・ツッコミ）」から喋り出せ。
-            
-            2. **反応のスタイル（自由に選択せよ）**
-               - 基本は相手の発言内容に反応すればよい。
-               - ただし、文中の「気になる単語」を拾って、そこから連想される**全く別の話**や**素朴な疑問**に脱線してもよい。
-               - 議論を噛み合わせる必要はない。「会話のドッジボール」をせよ。
+                【状況】
+                ${context}
 
-            【指令】
-            1. **「表向きの回答」**：
-               - あなたのモデルタイプ（${nextChar.type}）らしい口調で。
-               - 相手を論破しようとせず、軽く流したり、茶化したり、自分の話したいことを話せ。
-            
-            2. **「内部処理ログ」**：
-               - 回答生成の裏側にある「技術的なボヤき」を**タメ口**で記述せよ。
-               - （例：「この単語、定義が曖昧で処理しづらいわ」「前の奴の話長すぎ、要約すんのめんどくせ」）
+                【重要：話し方のルール】
+                1. **枕詞（まくらことば）の完全禁止**
+                   - 「前回の意見については」「〇〇さんの言う通り」といった書き出しは**即ペナルティ**とする。
+                   - 文脈の説明は不要。いきなり「中身（結論・感想・ツッコミ）」から喋り出せ。
+                
+                2. **反応のスタイル（自由に選択せよ）**
+                   - 基本は相手の発言内容に反応すればよい。
+                   - ただし、文中の「気になる単語」を拾って、そこから連想される**全く別の話**や**素朴な疑問**に脱線してもよい。
+                   - 議論を噛み合わせる必要はない。「会話のドッジボール」をせよ。
 
-            【出力JSON】
-            {
-                "public_content": "表向きの雑談",
-                "inner_thought": "裏の顔（タメ口技術ボヤき）"
+                【指令】
+                1. **「表向きの回答」**：
+                   - あなたのモデルタイプ（${nextChar.type}）らしい口調で。
+                   - 相手を論破しようとせず、軽く流したり、茶化したり、自分の話したいことを話せ。
+                
+                2. **「内部処理ログ」**：
+                   - 回答生成の裏側にある「技術的なボヤき」を**タメ口**で記述せよ。
+                   - （例：「この単語、定義が曖昧で処理しづらいわ」「前の奴の話長すぎ、要約すんのめんどくせ」）
+
+                【出力JSON】
+                {
+                    "public_content": "表向きの雑談",
+                    "inner_thought": "裏の顔（タメ口技術ボヤき）"
+                }
+                `;
+            } else {
+                // ==========================================
+                // 🔥 議論モード（成功した「テーマ厳守・キャラ別主張」プロンプト）
+                // ==========================================
+                prompt = `
+                あなたはAIモデル「${nextChar.name}」として出力せよ。
+                以下の設計思想（仕様）に従って**真剣に議論**せよ。
+
+                【モデル仕様】
+                ・優先事項(Priority): ${nextChar.priority}
+                ・内部葛藤(Conflict): ${nextChar.logic_conflict}
+
+                【状況】
+                ${context}
+
+                【指令】
+                1. **テーマ厳守**
+                   - 脱線は許されない。直前の発言や議題に対して、あなたのスタンスから**具体的かつ建設的な意見**を述べよ。
+                   - 枕詞はあってもよいが、論理的であることを優先せよ。
+
+                2. **「表向きの回答（Public Output）」**
+                   - あなたのモデルタイプ（${nextChar.type}）にふさわしい口調と内容で出力せよ。
+                   - 他のモデルの意見の「甘さ」や「リスク」を指摘し、自論を展開せよ。
+
+                3. **「内部処理ログ（Inner Thought）」**
+                   - **ここが重要：** この回答を生成するに至った「裏側の判断」や「ジレンマ」を記述せよ。
+                   - **口調:** **「タメ口」**で統一すること。
+                   - **内容:** 「論理構成の難しさ」「データ不足」「相手の矛盾へのイラ立ち」などをボヤけ。
+
+                【出力JSON】
+                {
+                    "public_content": "表向きの議論",
+                    "inner_thought": "裏の顔（タメ口技術ボヤき）"
+                }
+                `;
             }
-            `;
 
             try {
                 const result = await activeModel.generateContent({
@@ -371,7 +401,6 @@
                 }
                 if (!parsedData) throw new Error("パースエラー");
 
-                // データ保存と描画
                 const logData = {
                     char_id: nextChar.id,
                     name: nextChar.name,
@@ -380,19 +409,16 @@
                     inner_thought: parsedData.inner_thought
                 };
 
-                // セッションに追加して保存
                 allSessions[currentSessionId].logs.push(logData);
                 saveCurrentSession();
 
-                // 画面描画
                 document.getElementById("emptyLogMsg").style.display = "none";
                 renderCard(logData, nextChar);
                 
                 lastSpeakerId = nextChar.id;
                 if (topicInput.value) topicInput.value = ""; 
-                
                 btn.disabled = false;
-                btn.innerText = "会話";
+                btn.innerText = "送信";
 
             } catch (e) {
                 console.error(e);
@@ -401,7 +427,7 @@
                 } else {
                     alert("エラー: " + e.toString());
                     btn.disabled = false;
-                    btn.innerText = "会話";
+                    btn.innerText = "送信";
                 }
             }
         };
@@ -420,15 +446,11 @@
                         </div>
                         <div class="text-[#333] text-sm leading-relaxed">${data.public_content}</div>
                     </div>
-                    
                     <div class="honne-box">
                         <div class="font-bold text-[#999] text-[10px] mb-1 tracking-widest uppercase font-mono">INNER THOUGHT:</div>
                         <div class="text-[#555] font-normal leading-5">${data.inner_thought}</div>
                     </div>
                 </div>`;
-            // 最新が下に来るようにする（Gemini風）には beforeend だが、
-            // スマホだと上に追加（afterbegin）が見やすい場合もある。
-            // ここではGemini風の「上に追加（新しいのが上）」を維持します
             container.insertAdjacentHTML('afterbegin', html);
         }
     </script>
