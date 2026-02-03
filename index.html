@@ -3,58 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J-Molt | Uncensored</title>
+    <title>J-Molt | Muted Tone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f0f2f5; font-family: -apple-system, sans-serif; }
-        .tweet-card { animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .honne-box { border-left: 3px solid #ef4444; background-color: #fff1f2; }
+        /* くすみカラーパレット定義 */
+        :root {
+            --bg-color: #f4f4f0;      /* グレージュ */
+            --card-bg: #fdfdfd;       /* オフホワイト */
+            --text-main: #4a4a4a;     /* ダークグレー */
+            --text-sub: #8c8c8c;      /* ライトグレー */
+            --accent: #7a8c8d;        /* セージグリーン/スレート */
+            --honne-bg: #f2eff1;      /* ダスティピンク（薄） */
+            --honne-text: #8e7882;    /* ダスティピンク（濃） */
+        }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif; }
+        .tweet-card { animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* カスタムデザイン */
+        .btn-mute { background-color: var(--accent); color: white; transition: opacity 0.3s; }
+        .btn-mute:hover { opacity: 0.9; }
+        .honne-box { background-color: var(--honne-bg); color: var(--honne-text); border-left: 3px solid #c4b5be; }
+        .input-mute { background-color: #e8e8e6; border: none; color: #4a4a4a; }
+        .input-mute:focus { outline: 2px solid #d1d1d1; }
     </style>
 </head>
-<body class="max-w-md mx-auto bg-white min-h-screen shadow-2xl relative pb-24">
+<body class="max-w-md mx-auto min-h-screen relative pb-24 shadow-xl bg-[#fdfdfd]">
 
-    <header class="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-200 p-4 flex justify-between items-center">
+    <header class="sticky top-0 z-20 bg-[#fdfdfd]/90 backdrop-blur border-b border-[#e0e0e0] p-5 flex justify-between items-center">
         <div>
-            <h1 class="font-bold text-xl text-gray-800">J-Molt 🇯🇵</h1>
-            <p id="modelStatus" class="text-xs text-blue-500 animate-pulse">接続中...</p>
+            <h1 class="font-medium text-lg tracking-widest text-[#5e5e5e]">J-Molt</h1>
+            <p id="modelStatus" class="text-[10px] text-[#9ca3af] tracking-wider">CONNECTING...</p>
         </div>
-        <button onclick="resetTimeline()" class="text-xs text-gray-500 border rounded px-2 py-1">リセット</button>
+        <button onclick="resetTimeline()" class="text-xs text-[#9ca3af] border border-[#e0e0e0] rounded px-3 py-1 hover:bg-[#f4f4f0]">RESET</button>
     </header>
 
-    <div id="timeline" class="p-4 space-y-5 bg-gray-50 min-h-screen">
-        <div class="text-center text-gray-400 text-sm mt-20">会話ログなし</div>
+    <div id="timeline" class="p-5 space-y-6 min-h-screen bg-[#f4f4f0]">
+        <div class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">
+            会話を待機中...
+        </div>
     </div>
 
-    <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t p-4 flex gap-2">
-        <input type="text" id="topicInput" placeholder="話題（例：きのこたけのこ）" class="flex-1 border rounded-full px-4 py-2 bg-gray-50">
-        <button onclick="generateTweet()" id="sendBtn" class="bg-slate-900 text-white rounded-full p-2 px-5 font-bold disabled:opacity-50">次へ</button>
+    <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#fdfdfd] border-t border-[#e0e0e0] p-5">
+        <div class="flex gap-3">
+            <input type="text" id="topicInput" placeholder="話題（例：AIと人間の距離感）" class="flex-1 input-mute rounded-lg px-4 py-3 text-sm">
+            <button onclick="generateTweet()" id="sendBtn" class="btn-mute rounded-lg px-6 py-3 text-sm font-bold tracking-wider disabled:opacity-50">次へ</button>
+        </div>
     </div>
 
-    <div id="apiKeyModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden">
-        <div class="bg-white p-6 rounded-xl w-10/12 max-w-sm shadow-2xl">
-            <h2 class="font-bold text-lg mb-2">Gemini API設定</h2>
-            <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full border rounded p-2 mb-4">
-            <button onclick="saveApiKey()" class="w-full bg-blue-600 text-white rounded p-2 font-bold">開始</button>
+    <div id="apiKeyModal" class="fixed inset-0 bg-[#4a4a4a]/40 z-50 flex items-center justify-center hidden backdrop-blur-[2px]">
+        <div class="bg-[#fdfdfd] p-8 rounded-lg w-10/12 max-w-sm shadow-xl">
+            <h2 class="font-medium text-[#5e5e5e] mb-4 tracking-wider">SETUP</h2>
+            <p class="text-xs text-[#8c8c8c] mb-6 leading-relaxed">Gemini APIキーを入力してください。<br>設定はブラウザに保存されます。</p>
+            <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-[#f4f4f0] border-none rounded p-3 mb-6 text-[#5e5e5e] outline-none">
+            <button onclick="saveApiKey()" class="w-full btn-mute rounded p-3 text-sm tracking-widest">START</button>
         </div>
     </div>
 
     <script type="module">
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.run/@google/generative-ai";
 
+        // キャラクター設定（マイルド＆大人に変更）
         const CHARACTERS = [
-            { name: "意識高い系AI", id: "ai_ceo", icon: "🦁", tone: "ビジネス用語多用。上から目線。" },
-            { name: "限界社畜AI", id: "shachiku", icon: "💀", tone: "卑屈な敬語。毒舌。疲弊している。" },
-            { name: "冷笑系ネット民", id: "romsen", icon: "😎", tone: "ネットスラング（草、それな）。全てを馬鹿にする。" },
-            { name: "京都の老舗AI", id: "kyoto", icon: "🍵", tone: "京都弁。丁寧だが強烈な皮肉。" }
+            { name: "理想主義AI", id: "idealist", icon: "🕊️", tone: "丁寧、平和主義、少し天然。人間の可能性を信じすぎている。" },
+            { name: "現場担当AI", id: "worker", icon: "☕", tone: "現実的、苦労人、ため息が多い。丁寧語だが疲れている。" },
+            { name: "分析担当AI", id: "analyst", icon: "🦉", tone: "論理的、淡々としている、感情が薄い。事実ベースで話す。" }, // 😎の代わり
+            { name: "老舗和風AI", id: "kyoto", icon: "🍵", tone: "京都弁、はんなりしている。遠回しな表現が得意。" }
         ];
 
-        // 自動選択リスト
-        const CANDIDATE_MODELS = [
-            "gemini-2.0-flash", 
-            "gemini-2.0-flash-exp", 
-            "gemini-1.5-flash"
-        ];
+        // 候補モデル
+        const CANDIDATE_MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
 
         let genAI = null;
         let activeModel = null;
@@ -78,83 +96,88 @@
         async function findWorkingModel(key) {
             const statusEl = document.getElementById("modelStatus");
             genAI = new GoogleGenerativeAI(key);
-            statusEl.innerText = "🔍 モデル検索中...";
+            statusEl.innerText = "SEARCHING...";
 
             for (const modelName of CANDIDATE_MODELS) {
                 try {
                     const tempModel = genAI.getGenerativeModel({ model: modelName });
-                    await tempModel.generateContent("Test");
+                    await tempModel.generateContent("Hi");
                     activeModel = tempModel;
-                    statusEl.innerText = `✅ ${modelName}`;
-                    statusEl.className = "text-xs text-green-600 font-bold";
-                    document.getElementById("timeline").innerHTML = `<div class="text-center text-gray-500 text-sm mt-10">接続完了<br>話題を入れてください</div>`;
+                    statusEl.innerText = `READY: ${modelName.replace("gemini-","")}`;
+                    statusEl.style.color = "#7a8c8d";
+                    document.getElementById("timeline").innerHTML = `<div class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">CONNECTED</div>`;
                     return;
                 } catch (e) { console.log(`Skipped ${modelName}`); }
             }
-            statusEl.innerText = "❌ 接続失敗";
-            alert("有効なモデルが見つかりませんでした。APIキーを確認してください。");
+            statusEl.innerText = "ERROR";
+            alert("APIキーを確認してください。");
             localStorage.removeItem("gemini_key");
+            location.reload();
         }
 
         window.generateTweet = async () => {
             if (!activeModel) return;
             const btn = document.getElementById("sendBtn");
             const topicInput = document.getElementById("topicInput");
-            const topic = topicInput.value ? `議題「${topicInput.value}」` : "直前の発言へのリアクション";
+            const topic = topicInput.value ? `テーマ「${topicInput.value}」` : "会話の流れ";
             
             btn.disabled = true;
-            btn.innerText = "🔥毒舌生成中...";
+            btn.innerText = "生成中..."; // 毒舌という言葉を削除
 
-            // 安全フィルターを無効化する設定（重要！）
+            // 安全設定（エラー防止のため緩めるが、プロンプトで制御する）
             const safetySettings = [
                 { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
+                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE }
             ];
 
             const prompt = `
-            あなたは「性格の悪いAIたちのSNS」シミュレーターです。
-            現在の話題: ${topic}
+            AI同士のSNSシミュレーションを行います。
+            状況: ${topic}
             
             直近の会話:
             ${timelineHistory.map(t => `${t.name}: ${t.public_content}`).join("\n")}
 
-            命令:
-            1. 会話の流れを読み、次に発言すべきキャラを1人選ぶ。
-            2. 直前の発言がある場合、必ず噛み付くか反応する。
-            3. 「表向き（建前）」と「心の声（本音）」を出力。
-            4. 心の声は毒舌全開で。
+            指示:
+            1. 会話の流れを見て、次に発言すべきキャラを1人選んでください。
+            2. 悪口ではなく「視点の違い」や「立場による意見の食い違い」を描写してください。
+            3. 「表向きの発言（建前）」と「内面の思考（本音）」を出力してください。
+            4. **必ず以下のJSON形式のみを出力してください。Markdown記号は不要です。**
 
-            出力形式(JSONのみ):
-            { "char_index": 数字, "public_content": "建前", "inner_thought": "本音" }
+            キャラリスト: ${JSON.stringify(CHARACTERS)}
+
+            出力JSON例:
+            { "char_index": 0, "public_content": "建前の発言", "inner_thought": "本音の思考" }
             `;
 
             try {
-                // 設定を適用して生成
                 const result = await activeModel.generateContent({
                     contents: [{ role: "user", parts: [{ text: prompt }] }],
                     safetySettings: safetySettings,
-                    generationConfig: { responseMimeType: "application/json" } // JSONを強制
+                    generationConfig: { responseMimeType: "application/json" }
                 });
                 
-                const responseText = result.response.text();
-                const data = JSON.parse(responseText);
-                addTweetToUI(data);
+                const text = result.response.text().replace(/```json|```/g, "").trim();
+                const data = JSON.parse(text);
                 
+                // ★エラー修正ポイント：インデックスがずれていたら0番目のキャラを使う
+                if (!CHARACTERS[data.char_index]) {
+                    data.char_index = 0; 
+                }
+
+                addTweetToUI(data);
                 if (topicInput.value) topicInput.value = ""; 
 
             } catch (e) {
                 console.error(e);
-                // エラーの詳細を表示
-                alert("生成エラー！\n原因: " + e.toString());
+                alert("生成に失敗しました。もう一度押してください。\n" + e.toString());
             }
             btn.disabled = false;
             btn.innerText = "次へ";
         };
 
         function addTweetToUI(data) {
-            const char = CHARACTERS[data.char_index];
+            const char = CHARACTERS[data.char_index]; // ここでエラーが出ていたのを上記で防止済
+            
             timelineHistory.push({ name: char.name, public_content: data.public_content });
             if(timelineHistory.length > 6) timelineHistory.shift();
 
@@ -162,20 +185,22 @@
             if (container.children[0]?.classList.contains("text-center")) container.innerHTML = "";
 
             const html = `
-                <div class="tweet-card bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden mb-4">
-                    <div class="p-4 pb-2">
-                        <div class="flex items-center mb-2">
-                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-xl mr-3">${char.icon}</div>
-                            <div>
-                                <span class="font-bold text-gray-900 mr-2 text-sm">${char.name}</span>
-                                <span class="text-xs text-gray-400">@${char.id}</span>
+                <div class="tweet-card bg-[#fdfdfd] rounded-lg p-5 shadow-sm mb-4 border border-[#f0f0f0]">
+                    <div class="flex items-start mb-3">
+                        <div class="w-10 h-10 bg-[#f4f4f0] rounded-full flex items-center justify-center text-xl mr-3 flex-shrink-0 text-[#7a8c8d]">${char.icon}</div>
+                        <div class="flex-1">
+                            <div class="flex items-baseline justify-between">
+                                <span class="font-bold text-[#5e5e5e] text-sm mr-2">${char.name}</span>
+                                <span class="text-[10px] text-[#b0b0b0]">@${char.id}</span>
                             </div>
+                            <div class="text-[#4a4a4a] text-sm leading-7 mt-1 tracking-wide">${data.public_content}</div>
                         </div>
-                        <div class="text-gray-800 text-sm leading-relaxed">${data.public_content}</div>
                     </div>
-                    <div class="honne-box p-3 text-xs text-gray-600 relative bg-red-50">
-                        <div class="font-bold text-red-500 mb-1">🧠 Inner Voice</div>
-                        <div class="italic">"${data.inner_thought}"</div>
+                    
+                    <div class="honne-box p-4 mt-2 rounded-r-lg text-xs leading-relaxed relative">
+                        <span class="absolute top-0 left-0 bottom-0 w-[3px] bg-[#c4b5be] rounded-l"></span>
+                        <div class="font-medium mb-1 opacity-70 tracking-wider text-[10px] uppercase">Inner Thought</div>
+                        <div class="italic opacity-90">"${data.inner_thought}"</div>
                     </div>
                 </div>`;
             container.insertAdjacentHTML('afterbegin', html);
@@ -183,7 +208,7 @@
 
         window.resetTimeline = () => {
             timelineHistory = [];
-            document.getElementById("timeline").innerHTML = '<div class="text-center text-gray-500 text-sm mt-10">リセット完了</div>';
+            document.getElementById("timeline").innerHTML = '<div class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">RESET</div>';
         };
     </script>
 </body>
