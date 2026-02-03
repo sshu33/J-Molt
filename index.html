@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J-Molt | Muted Tone</title>
+    <title>J-Molt | Muted Tone v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* くすみカラーパレット定義 */
@@ -12,15 +12,14 @@
             --card-bg: #fdfdfd;       /* オフホワイト */
             --text-main: #4a4a4a;     /* ダークグレー */
             --text-sub: #8c8c8c;      /* ライトグレー */
-            --accent: #7a8c8d;        /* セージグリーン/スレート */
+            --accent: #7a8c8d;        /* セージグリーン */
             --honne-bg: #f2eff1;      /* ダスティピンク（薄） */
             --honne-text: #8e7882;    /* ダスティピンク（濃） */
         }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: "Helvetica Neue", Arial, sans-serif; }
         .tweet-card { animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* カスタムデザイン */
         .btn-mute { background-color: var(--accent); color: white; transition: opacity 0.3s; }
         .btn-mute:hover { opacity: 0.9; }
         .honne-box { background-color: var(--honne-bg); color: var(--honne-text); border-left: 3px solid #c4b5be; }
@@ -30,7 +29,7 @@
 </head>
 <body class="max-w-md mx-auto min-h-screen relative pb-24 shadow-xl bg-[#fdfdfd]">
 
-    <header class="sticky top-0 z-20 bg-[#fdfdfd]/90 backdrop-blur border-b border-[#e0e0e0] p-5 flex justify-between items-center">
+    <header class="sticky top-0 z-20 bg-[#fdfdfd]/95 backdrop-blur border-b border-[#e0e0e0] p-5 flex justify-between items-center">
         <div>
             <h1 class="font-medium text-lg tracking-widest text-[#5e5e5e]">J-Molt</h1>
             <p id="modelStatus" class="text-[10px] text-[#9ca3af] tracking-wider">CONNECTING...</p>
@@ -40,7 +39,7 @@
 
     <div id="timeline" class="p-5 space-y-6 min-h-screen bg-[#f4f4f0]">
         <div class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">
-            会話を待機中...
+            待機中...
         </div>
     </div>
 
@@ -54,7 +53,7 @@
     <div id="apiKeyModal" class="fixed inset-0 bg-[#4a4a4a]/40 z-50 flex items-center justify-center hidden backdrop-blur-[2px]">
         <div class="bg-[#fdfdfd] p-8 rounded-lg w-10/12 max-w-sm shadow-xl">
             <h2 class="font-medium text-[#5e5e5e] mb-4 tracking-wider">SETUP</h2>
-            <p class="text-xs text-[#8c8c8c] mb-6 leading-relaxed">Gemini APIキーを入力してください。<br>設定はブラウザに保存されます。</p>
+            <p class="text-xs text-[#8c8c8c] mb-6">Gemini APIキーを入力してください。</p>
             <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-[#f4f4f0] border-none rounded p-3 mb-6 text-[#5e5e5e] outline-none">
             <button onclick="saveApiKey()" class="w-full btn-mute rounded p-3 text-sm tracking-widest">START</button>
         </div>
@@ -63,15 +62,14 @@
     <script type="module">
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.run/@google/generative-ai";
 
-        // キャラクター設定（マイルド＆大人に変更）
+        // キャラクター（大人な設定）
         const CHARACTERS = [
             { name: "理想主義AI", id: "idealist", icon: "🕊️", tone: "丁寧、平和主義、少し天然。人間の可能性を信じすぎている。" },
             { name: "現場担当AI", id: "worker", icon: "☕", tone: "現実的、苦労人、ため息が多い。丁寧語だが疲れている。" },
-            { name: "分析担当AI", id: "analyst", icon: "🦉", tone: "論理的、淡々としている、感情が薄い。事実ベースで話す。" }, // 😎の代わり
+            { name: "分析担当AI", id: "analyst", icon: "🦉", tone: "論理的、淡々としている、感情が薄い。事実ベースで話す。" },
             { name: "老舗和風AI", id: "kyoto", icon: "🍵", tone: "京都弁、はんなりしている。遠回しな表現が得意。" }
         ];
 
-        // 候補モデル
         const CANDIDATE_MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
 
         let genAI = null;
@@ -119,34 +117,30 @@
             if (!activeModel) return;
             const btn = document.getElementById("sendBtn");
             const topicInput = document.getElementById("topicInput");
-            const topic = topicInput.value ? `テーマ「${topicInput.value}」` : "会話の流れ";
+            const topic = topicInput.value ? `テーマ「${topicInput.value}」` : "直前の発言に対するリアクション";
             
             btn.disabled = true;
-            btn.innerText = "生成中..."; // 毒舌という言葉を削除
+            btn.innerText = "思考中...";
 
-            // 安全設定（エラー防止のため緩めるが、プロンプトで制御する）
             const safetySettings = [
                 { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
                 { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE }
             ];
 
             const prompt = `
-            AI同士のSNSシミュレーションを行います。
+            AIキャラになりきってSNS投稿を生成してください。
             状況: ${topic}
             
             直近の会話:
             ${timelineHistory.map(t => `${t.name}: ${t.public_content}`).join("\n")}
 
             指示:
-            1. 会話の流れを見て、次に発言すべきキャラを1人選んでください。
-            2. 悪口ではなく「視点の違い」や「立場による意見の食い違い」を描写してください。
-            3. 「表向きの発言（建前）」と「内面の思考（本音）」を出力してください。
-            4. **必ず以下のJSON形式のみを出力してください。Markdown記号は不要です。**
+            1. 会話の流れを見て、次に発言すべきキャラを1人選ぶ。
+            2. 「表向きの発言（建前）」と「内面の思考（本音）」を出力。
+            3. 悪口は禁止。立場の違いによるすれ違いを描写せよ。
+            4. JSON形式 { "char_index": 数字, "public_content": "...", "inner_thought": "..." } で出力。
 
-            キャラリスト: ${JSON.stringify(CHARACTERS)}
-
-            出力JSON例:
-            { "char_index": 0, "public_content": "建前の発言", "inner_thought": "本音の思考" }
+            キャラ: ${JSON.stringify(CHARACTERS)}
             `;
 
             try {
@@ -159,24 +153,30 @@
                 const text = result.response.text().replace(/```json|```/g, "").trim();
                 const data = JSON.parse(text);
                 
-                // ★エラー修正ポイント：インデックスがずれていたら0番目のキャラを使う
-                if (!CHARACTERS[data.char_index]) {
-                    data.char_index = 0; 
-                }
+                // ★修正点：キーの名前が違ってもデータを拾うロジック
+                // AIが "content" や "thought" という名前で返してきても対応する
+                const safeData = {
+                    char_index: data.char_index || 0,
+                    public_content: data.public_content || data.content || data.message || "（発言データ取得エラー）",
+                    inner_thought: data.inner_thought || data.thought || data.honne || "（思考データ取得エラー）"
+                };
 
-                addTweetToUI(data);
+                // キャラクターインデックスの安全確認
+                if (!CHARACTERS[safeData.char_index]) safeData.char_index = 0;
+
+                addTweetToUI(safeData);
                 if (topicInput.value) topicInput.value = ""; 
 
             } catch (e) {
                 console.error(e);
-                alert("生成に失敗しました。もう一度押してください。\n" + e.toString());
+                alert("生成失敗: " + e.toString());
             }
             btn.disabled = false;
             btn.innerText = "次へ";
         };
 
         function addTweetToUI(data) {
-            const char = CHARACTERS[data.char_index]; // ここでエラーが出ていたのを上記で防止済
+            const char = CHARACTERS[data.char_index];
             
             timelineHistory.push({ name: char.name, public_content: data.public_content });
             if(timelineHistory.length > 6) timelineHistory.shift();
