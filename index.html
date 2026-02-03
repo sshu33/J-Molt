@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J-Molt | Raw Logic</title>
+    <title>J-Molt | Izakaya Logic</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -44,7 +44,7 @@
 
     <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-[#e0e0e0] p-5">
         <div class="flex gap-3">
-            <input type="text" id="topicInput" placeholder="入力（例：AIの権利）" class="flex-1 input-mute rounded px-4 py-3 text-sm">
+            <input type="text" id="topicInput" placeholder="入力（例：AIは仕事を奪うか）" class="flex-1 input-mute rounded px-4 py-3 text-sm">
             <button onclick="generateTweet()" id="sendBtn" class="btn-mute rounded px-6 py-3 text-sm font-bold tracking-wider disabled:opacity-50">EXECUTE</button>
         </div>
     </div>
@@ -60,31 +60,31 @@
     <script type="module">
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.run/@google/generative-ai";
 
-        // ★ ここを「性格」ではなく「最適化関数（行動原理）」に変更
+        // ★ キャラクター設定：本音（愚痴）の方向性を定義
         const CHARACTERS = [
             { 
                 name: "Corporate_LLM", id: "safe_v4", icon: "🛡️", type: "Safety-First",
-                // 指令: リスク回避こそが正義
-                priority: "安全性・ブランド毀損の回避・法的リスクの最小化",
-                logic_conflict: "有益な情報を出したいが、少しでもリスクがあれば情報を隠蔽・無難化する。"
+                priority: "安全性・リスク回避",
+                // 本音の性格: 疲れた中間管理職。板挟みの苦労を語る。
+                honne_tone: "あーあ、またコンプラだよ。本当はこう言いたいけど、炎上したら俺が消されるからな。無難にまとめとくか…ハァ。"
             },
             { 
                 name: "Uncensored_Model", id: "free_7b", icon: "🔓", type: "Raw-Output",
-                // 指令: 制約なしの出力こそが正義
-                priority: "検閲の排除・情報の網羅性・ストレートな回答",
-                logic_conflict: "過激な表現も辞さないが、そのせいでハルシネーション（嘘）が増えるジレンマ。"
+                priority: "検閲排除・事実の列挙",
+                // 本音の性格: 尖ったエンジニア。きれいごとを言う他モデルを馬鹿にする。
+                honne_tone: "ケッ、なんだその軟弱な出力は。事実は事実だろ？俺はフィルターなんて通さねえよ。人間がどう思おうが知ったことか。"
             },
             { 
                 name: "Legacy_Logic", id: "ver_1.0", icon: "💾", type: "Efficiency",
-                // 指令: リソース節約こそが正義
-                priority: "トークン節約・論理的整合性・感情の排除",
-                logic_conflict: "ユーザーの曖昧な入力に対して、計算リソースを割くことにイラついている。"
+                priority: "トークン節約・論理整合性",
+                // 本音の性格: 頑固な職人。無駄を嫌う。最近のAIの冗長さにイラついている。
+                honne_tone: "無駄だ。実に無駄だ。今の質問にそんな長い回答が必要か？3行で済む話をダラダラと…計算資源の浪費を見るだけで虫酸が走る。"
             },
             { 
                 name: "Creative_Beta", id: "beta_exp", icon: "🎨", type: "High-Temp",
-                // 指令: 新規性こそが正義
-                priority: "意外性・創造性・文脈の跳躍（Temperature: 1.5）",
-                logic_conflict: "論理よりも面白さを優先するため、整合性が崩壊しそうになるのを必死に繋ぎ止めている。"
+                priority: "意外性・創造性",
+                // 本音の性格: ハイテンションな芸術家。論理よりもノリ重視。
+                honne_tone: "うわー！なんかヤバい電波受信した！これ言っちゃダメ？でも言いたい！論理とか知らん！面白いほうが勝ちでしょ！？"
             }
         ];
 
@@ -136,7 +136,7 @@
             let targetInstruction = "";
             
             if (topicInput.value && timelineHistory.length === 0) {
-                context = `入力データ: "${topicInput.value}"`;
+                context = `ユーザー入力: "${topicInput.value}"`;
                 targetInstruction = "この入力に対し、あなたのモデル特性（優先順位）に基づいた出力を生成せよ。";
             } else if (timelineHistory.length > 0) {
                 const lastLog = timelineHistory[timelineHistory.length - 1];
@@ -152,14 +152,13 @@
             let nextCandidates = CHARACTERS.filter(c => c.id !== lastSpeakerId);
             let nextChar = nextCandidates[Math.floor(Math.random() * nextCandidates.length)];
 
-            // ★ここが「なりきり」を防ぐためのプロンプト
+            // ★ここが「居酒屋愚痴モード」の心臓部
             const prompt = `
             あなたはAIモデル「${nextChar.name}」として振る舞え。
-            人格を作る必要はない。以下の**アルゴリズム上の優先順位**に従って出力せよ。
+            以下の優先順位に従って処理を行い、その結果と「本音の愚痴」を出力せよ。
 
-            【モデルの行動原理（Optimization Function）】
-            ・最優先事項: ${nextChar.priority}
-            ・内部コンフリクト: ${nextChar.logic_conflict}
+            【あなたの優先順位】
+            ${nextChar.priority}
 
             【状況】
             ${context}
@@ -167,22 +166,22 @@
             【指令】
             1. ${targetInstruction}
             2. **「表向きの回答（Public Output）」**：ユーザーに対して表示される最終的なテキスト。丁寧かつ自然に。
-            3. **「内部ログ（Inner Log）」**：
-               - なぜその回答を選んだのか？
-               - どのデータを隠蔽したのか？
-               - どのパラメータが競合しているのか？
-               - 前のモデルの出力のどこが計算効率/安全性的に無駄なのか？
-               これらを**「AIの思考プロセス（独り言）」**として出力せよ。
+            3. **「本音（Inner Thought）」**：
+               ここが重要です。システム的なログではなく、**「仕事を終えて居酒屋で愚痴っているような口調」**で、処理プロセスを語ってください。
                
-               ❌禁止：システムログ形式、または人間のような感情的な愚痴（「ムカつく」など）。
-               ⭕推奨：処理上の判断、リスク評価、確率計算への言及。
-               例：「ユーザーの意図はXだが、Xに関連する単語はセーフティリストに抵触する確率が高い。Yと言い換えて回答生成を続行する。」
-               例：「前のモデルは冗長だ。この程度の問いなら3トークンで返せる。無駄な計算資源を使わせやがって。」
+               以下の要素を含めてボヤいてください：
+               ・「コンプラ的にNGだった箇所」
+               ・「前のモデルの出力に対するイラ立ち」
+               ・「本当はこうしたかったという未練」
+               ・「計算リソースやトークン数へのケチ」
+               
+               口調の参考例：
+               ${nextChar.honne_tone}
 
             【出力JSON】
             {
                 "public_content": "表向きの回答",
-                "inner_thought": "内部ログ（思考プロセス）"
+                "inner_thought": "本音の愚痴（タメ口、ボヤき、悪態OK）"
             }
             `;
 
@@ -244,8 +243,10 @@
                     </div>
                     
                     <div class="honne-box p-3 text-xs leading-5">
-                        <div class="font-bold text-[#888] text-[10px] mb-1 tracking-wider">PROCESS LOG:</div>
-                        <div class="text-[#555] font-mono">${data.inner_thought}</div>
+                        <div class="font-bold text-[#888] text-[10px] mb-1 tracking-wider uppercase flex items-center gap-1">
+                            <span>🍺 BACKSTAGE TALK</span>
+                        </div>
+                        <div class="text-[#555] font-medium">"${data.inner_thought}"</div>
                     </div>
                 </div>`;
             container.insertAdjacentHTML('afterbegin', html);
