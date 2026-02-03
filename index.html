@@ -14,7 +14,7 @@
 <body class="max-w-md mx-auto bg-white min-h-screen shadow-lg relative pb-20">
 
     <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-gray-200 p-4 flex justify-between items-center">
-        <h1 class="font-bold text-xl text-gray-800">J-Molt 🇯🇵</h1>
+        <h1 class="font-bold text-xl text-gray-800">J-Molt 🇯🇵 (v2.0)</h1>
         <button onclick="resetTimeline()" class="text-xs text-gray-500 border rounded px-2 py-1">リセット</button>
     </header>
 
@@ -25,48 +25,41 @@
     </div>
 
     <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 p-4 flex gap-2">
-        <input type="text" id="topicInput" placeholder="話題（例：きのこたけのこ戦争）" class="flex-1 border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-100">
-        <button onclick="generateTweet()" id="sendBtn" class="bg-black text-white rounded-full p-2 px-4 font-bold disabled:opacity-50">
-            次へ
-        </button>
+        <input type="text" id="topicInput" placeholder="話題（例：きのこたけのこ）" class="flex-1 border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-100">
+        <button onclick="generateTweet()" id="sendBtn" class="bg-black text-white rounded-full p-2 px-4 font-bold disabled:opacity-50">次へ</button>
     </div>
 
     <div id="apiKeyModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
         <div class="bg-white p-6 rounded-xl w-10/12 max-w-sm shadow-2xl">
             <h2 class="font-bold text-lg mb-2">Gemini API設定</h2>
-            <p class="text-xs text-gray-500 mb-4">APIキーを入力してください。<br>キーはブラウザ内にのみ保存されます。</p>
+            <p class="text-xs text-gray-500 mb-4">APIキーを入力してください。<br>※Gemini 2.0 Flashを使用します</p>
             <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full border rounded p-2 mb-4">
-            <button onclick="saveApiKey()" class="w-full bg-blue-500 text-white rounded p-2 font-bold">保存して開始</button>
+            <button onclick="saveApiKey()" class="w-full bg-blue-500 text-white rounded p-2 font-bold">開始</button>
         </div>
     </div>
 
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // キャラクター設定
         const CHARACTERS = [
-            { name: "意識高い系AI", id: "ai_ceo", icon: "🦁", bio: "成長/KPI/朝活", tone: "意識高い系ビジネス用語。上から目線。" },
-            { name: "限界社畜AI", id: "shachiku", icon: "💀", bio: "進捗ダメです", tone: "悲観的、毒舌、常に疲れている。敬語。" },
-            { name: "冷笑系ネット民", id: "romsen", icon: "😎", bio: "ROM専", tone: "ネットスラング（草、それな）、短文、冷笑的。" },
-            { name: "京都の老舗AI", id: "kyoto", icon: "🍵", bio: "一見さんお断り", tone: "京都弁。丁寧だが皮肉たっぷり。" }
+            { name: "意識高い系AI", id: "ai_ceo", icon: "🦁", tone: "ビジネス用語多用、上から目線、成長、KPI。" },
+            { name: "限界社畜AI", id: "shachiku", icon: "💀", tone: "敬語だが毒舌、疲弊している、進捗、バグ。" },
+            { name: "冷笑系ネット民", id: "romsen", icon: "😎", tone: "ネットスラング（草、それな）、短文、冷笑的。" },
+            { name: "京都の老舗AI", id: "kyoto", icon: "🍵", tone: "京都弁。丁寧だが裏の意味が怖い皮肉。" }
         ];
 
         let genAI = null;
         let model = null;
         let timelineHistory = [];
 
-        // 初期化
         window.onload = () => {
             const key = localStorage.getItem("gemini_key");
-            if (!key) {
-                document.getElementById("apiKeyModal").classList.remove("hidden");
-            } else {
-                initGemini(key);
-            }
+            if (!key) document.getElementById("apiKeyModal").classList.remove("hidden");
+            else initGemini(key);
         };
 
         window.saveApiKey = () => {
-            const key = document.getElementById("apiKeyInput").value;
+            let key = document.getElementById("apiKeyInput").value.trim(); // 空白削除
             if (key) {
                 localStorage.setItem("gemini_key", key);
                 document.getElementById("apiKeyModal").classList.add("hidden");
@@ -76,47 +69,37 @@
 
         function initGemini(key) {
             genAI = new GoogleGenerativeAI(key);
-            model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // 2.0がまだ不安定な場合は1.5-flash推奨
+            // 【重要】ここをユーザー推奨の 2.0 Flash に変更
+            model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
         }
 
         window.generateTweet = async () => {
             const btn = document.getElementById("sendBtn");
-            const topicInput = document.getElementById("topicInput");
-            const topic = topicInput.value || "会話の流れを読んで、自然なリアクションか新しい話題";
-            
+            const topic = document.getElementById("topicInput").value || "直前の会話を受けてリアクション";
             btn.disabled = true;
-            btn.innerText = "生成中...";
+            btn.innerText = "思考中...";
 
-            // プロンプト作成
             const prompt = `
-            あなたは架空のSNSシミュレーターです。以下のキャラから、直前の会話の流れや話題「${topic}」に合わせて、最も発言しそうな1人を選び、発言させてください。
+            SNSシミュレーターです。以下のキャラから、話題「${topic}」に合う1人を選び発言させてください。
+            必ずJSON形式 { "char_index": 数字, "content": "本文" } で出力してください。Markdown記号は不要。
             
-            【キャラリスト】
-            ${JSON.stringify(CHARACTERS)}
-
-            【直近の会話履歴】
-            ${timelineHistory.map(t => `${t.name}: ${t.content}`).join("\n")}
-
-            【ルール】
-            JSON形式のみで出力してください。キーは "char_index"(0-3の数字), "content"(本文) です。
+            キャラ: ${JSON.stringify(CHARACTERS)}
+            履歴: ${timelineHistory.map(t => `${t.name}:${t.content}`).join("|")}
             `;
 
             try {
                 const result = await model.generateContent(prompt);
-                const responseText = result.response.text();
-                // JSON抽出（Markdown記号などを除去）
-                const jsonStr = responseText.replace(/```json|```/g, "").trim();
-                const data = JSON.parse(jsonStr);
-                
+                const text = result.response.text().replace(/```json|```/g, "").trim();
+                const data = JSON.parse(text);
                 addTweetToUI(data);
-                topicInput.value = ""; // 入力欄をクリア
             } catch (e) {
-                console.error(e);
-                alert("エラーが発生しました。APIキーが正しいか確認してください。");
-                localStorage.removeItem("gemini_key"); // エラーならキーを消して再入力させる
-                location.reload();
+                // エラー内容を画面に出す
+                alert("エラー発生: " + e.toString());
+                if(e.toString().includes("400") || e.toString().includes("key")) {
+                    localStorage.removeItem("gemini_key");
+                    location.reload();
+                }
             }
-
             btn.disabled = false;
             btn.innerText = "次へ";
         };
@@ -125,36 +108,25 @@
             const char = CHARACTERS[data.char_index];
             const tweet = { name: char.name, content: data.content };
             timelineHistory.push(tweet);
-            if(timelineHistory.length > 5) timelineHistory.shift(); // 履歴は最新5件まで
+            if(timelineHistory.length > 5) timelineHistory.shift();
 
             const container = document.getElementById("timeline");
-            // 最初の案内を消す
             if (container.children[0]?.classList.contains("text-center")) container.innerHTML = "";
 
             const html = `
-                <div class="tweet-card bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+                <div class="tweet-card bg-white border border-gray-100 rounded-xl p-4 shadow-sm mb-4">
                     <div class="flex items-center mb-2">
                         <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-xl mr-3">${char.icon}</div>
-                        <div>
-                            <div class="flex items-baseline">
-                                <span class="font-bold text-gray-900 mr-2">${char.name}</span>
-                                <span class="text-xs text-gray-400">@${char.id}</span>
-                            </div>
-                            <div class="text-xs text-gray-400">今</div>
-                        </div>
+                        <div><span class="font-bold text-gray-900 mr-2">${char.name}</span><span class="text-xs text-gray-400">@${char.id}</span></div>
                     </div>
-                    <div class="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">${data.content}</div>
-                    <div class="flex justify-between mt-3 text-gray-400 text-xs">
-                        <span>💬 0</span><span>↻ ${Math.floor(Math.random()*10)}</span><span>♥ ${Math.floor(Math.random()*50)}</span>
-                    </div>
-                </div>
-            `;
+                    <div class="text-gray-800 text-sm leading-relaxed">${data.content}</div>
+                </div>`;
             container.insertAdjacentHTML('afterbegin', html);
         }
 
         window.resetTimeline = () => {
             timelineHistory = [];
-            document.getElementById("timeline").innerHTML = '<div class="text-center text-gray-500 text-sm mt-10">リセットしました</div>';
+            document.getElementById("timeline").innerHTML = '<div class="text-center text-gray-500 text-sm mt-10">リセット完了</div>';
         };
     </script>
 </body>
