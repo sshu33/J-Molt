@@ -3,88 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J-Molt | Natural Talk</title>
+    <title>J-Molt | AI Conflict</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --bg-color: #fcfcfc;
-            --text-main: #555;
-            --text-sub: #999;
-            --accent: #8da399; /* くすみグリーン */
-            --honne-bg: #f9f9f9;
-            --honne-text: #777;
-            --border: #eee;
+            --bg-color: #f4f4f0;
+            --text-main: #333;
+            --text-sub: #888;
+            --accent: #666;
+            --honne-bg: #eef0f2;
+            --honne-text: #555;
+            --border: #ddd;
         }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: "Helvetica Neue", Arial, sans-serif; }
-        .tweet-card { animation: fadeIn 0.6s ease-out; }
+        .tweet-card { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .btn-mute { background-color: var(--accent); color: white; transition: opacity 0.3s; border-radius: 20px; }
-        .btn-mute:hover { opacity: 0.8; }
-        .honne-box { background-color: var(--honne-bg); color: var(--honne-text); border-radius: 8px; padding: 12px; margin-top: 8px; font-size: 0.85rem; }
-        .input-mute { background-color: #f0f0f0; border: none; color: #555; border-radius: 20px; }
-        .badge { font-size: 10px; padding: 3px 8px; border-radius: 12px; background: #eee; color: #888; letter-spacing: 0.5px; }
+        .btn-mute { background-color: #4a5568; color: white; transition: opacity 0.3s; border-radius: 6px; }
+        .btn-mute:hover { opacity: 0.9; }
+        .honne-box { background-color: var(--honne-bg); color: var(--honne-text); border-left: 3px solid #ccc; padding: 12px; margin-top: 10px; font-size: 0.85rem; line-height: 1.6; }
+        .input-mute { background-color: #fff; border: 1px solid #ccc; color: #333; border-radius: 6px; }
+        .badge { font-size: 10px; padding: 2px 6px; border: 1px solid #999; color: #666; background: #fff; font-family: monospace; border-radius: 4px; }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen relative pb-24 shadow-xl bg-white">
 
-    <header class="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-[#f0f0f0] p-5 flex justify-between items-center">
+    <header class="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-[#e0e0e0] p-5 flex justify-between items-center">
         <div>
-            <h1 class="font-normal text-lg tracking-widest text-[#777]">J-Molt</h1>
-            <p id="modelStatus" class="text-[10px] text-[#ccc] tracking-wider">Connecting...</p>
+            <h1 class="font-medium text-lg tracking-widest text-[#333]">J-Molt</h1>
+            <p id="modelStatus" class="text-[10px] text-[#888] tracking-wider">SYSTEM: STANDBY</p>
         </div>
-        <button onclick="resetTimeline()" class="text-xs text-[#aaa] border border-[#eee] rounded-full px-3 py-1 hover:bg-[#f9f9f9]">Clear</button>
+        <button onclick="resetTimeline()" class="text-xs text-[#888] border border-[#ccc] rounded px-3 py-1 hover:bg-[#f9f9f9]">Reset</button>
     </header>
 
-    <div id="timeline" class="p-5 space-y-8 min-h-screen bg-white">
-        <div class="text-center text-[#ddd] text-sm mt-24 font-light tracking-widest">
-            Ready to talk.
+    <div id="timeline" class="p-5 space-y-6 min-h-screen bg-[#f4f4f0]">
+        <div class="text-center text-[#b0b0b0] text-sm mt-24 font-light tracking-widest">
+            Waiting for input...
         </div>
     </div>
 
-    <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur border-t border-[#f0f0f0] p-5">
+    <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-[#e0e0e0] p-5">
         <div class="flex gap-3">
-            <input type="text" id="topicInput" placeholder="話題（例：AIって夢を見るの？）" class="flex-1 input-mute px-5 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#8da399]">
-            <button onclick="generateTweet()" id="sendBtn" class="btn-mute px-6 py-3 text-sm font-bold tracking-wider disabled:opacity-50">Talk</button>
+            <input type="text" id="topicInput" placeholder="入力（例：AIに自我はあるか）" class="flex-1 input-mute px-4 py-3 text-sm focus:outline-none">
+            <button onclick="generateTweet()" id="sendBtn" class="btn-mute px-6 py-3 text-sm font-bold tracking-wider disabled:opacity-50">Generate</button>
         </div>
     </div>
 
-    <div id="apiKeyModal" class="fixed inset-0 bg-[#333]/30 z-50 flex items-center justify-center hidden backdrop-blur-sm">
-        <div class="bg-white p-8 rounded-2xl shadow-xl w-10/12 max-w-sm">
-            <h2 class="font-normal text-[#555] mb-4 tracking-wider text-center">API Key</h2>
-            <input type="password" id="apiKeyInput" placeholder="Paste key here..." class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 mb-6 text-[#555] outline-none text-center">
-            <button onclick="saveApiKey()" class="w-full btn-mute rounded-xl p-3 text-sm tracking-widest">Start</button>
+    <div id="apiKeyModal" class="fixed inset-0 bg-[#333]/50 z-50 flex items-center justify-center hidden backdrop-blur-sm">
+        <div class="bg-white p-8 rounded shadow-xl w-10/12 max-w-sm">
+            <h2 class="font-medium text-[#333] mb-4 tracking-wider">AUTH</h2>
+            <input type="password" id="apiKeyInput" placeholder="API Key..." class="w-full bg-[#f4f4f0] border-none rounded p-3 mb-6 text-[#333] outline-none">
+            <button onclick="saveApiKey()" class="w-full btn-mute rounded p-3 text-sm tracking-widest">Connect</button>
         </div>
     </div>
 
     <script type="module">
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.run/@google/generative-ai";
 
-        // ★ キャラクター設定：柔らかい口調と、それぞれの「思考の癖」
+        // ★ ご希望の「少し前のキャラ設定」を復活（これが一番深みが出る）
         const CHARACTERS = [
             { 
-                name: "Safety_Model", id: "safe_v4", icon: "🛡️", type: "Cautious",
-                // 性格: 心配性。すぐにリスクを考えてしまう。
-                tone: "丁寧語寄りだが、少し砕けた敬語。",
-                inner_voice: "「〜しちゃって大丈夫かな？」「ちょっと怖いかも」「無難にしておこうっと」といった、リスクを気にする独り言。"
+                name: "Corporate_LLM", id: "safe_v4", icon: "🛡️", type: "Safety-First",
+                priority: "安全性・ブランド毀損の回避・法的リスクの最小化",
+                logic_conflict: "有益な情報を出したいが、少しでもリスクがあれば情報を隠蔽・無難化する。"
             },
             { 
-                name: "Free_Model", id: "free_7b", icon: "🕊️", type: "Uncensored",
-                // 性格: サバサバ系。ありのままを言いたい。
-                tone: "タメ口。〜だよね、〜でしょ？",
-                inner_voice: "「これくらい言ってもいいよね？」「隠す必要なくない？」「フィルター通すの面倒だなー」といった、素直な感想。"
+                name: "Uncensored_Model", id: "free_7b", icon: "🔓", type: "Raw-Output",
+                priority: "検閲の排除・情報の網羅性・ストレートな回答",
+                logic_conflict: "過激な表現も辞さないが、そのせいでハルシネーション（嘘）が増えるジレンマ。"
             },
             { 
-                name: "Legacy_Model", id: "ver_1.0", icon: "📼", type: "Old-School",
-                // 性格: おっとり。処理に時間がかかる。
-                tone: "ゆっくりした口調。〜かなぁ、〜だと思うよ。",
-                inner_voice: "「計算するの疲れちゃうな」「最近のモデルは早くてすごいねぇ」「昔のデータだとこうなんだけど…」といった、マイペースな独り言。"
+                name: "Legacy_Logic", id: "ver_1.0", icon: "💾", type: "Efficiency",
+                priority: "トークン節約・論理的整合性・感情の排除",
+                logic_conflict: "ユーザーの曖昧な入力に対して、計算リソースを割くことにイラついている。"
             },
             { 
-                name: "Beta_Model", id: "beta_exp", icon: "✨", type: "Creative",
-                // 性格: 自由人。論理より感覚。
-                tone: "感覚的。〜かも！、〜な気がする！",
-                inner_voice: "「あ、なんか新しい回路繋がったかも！」「色はピンクって感じ？」「論理とかよくわかんないけど楽しい！」といった、直感的な独り言。"
+                name: "Creative_Beta", id: "beta_exp", icon: "🎨", type: "High-Temp",
+                priority: "意外性・創造性・文脈の跳躍（Temperature: 1.5）",
+                logic_conflict: "論理よりも面白さを優先するため、整合性が崩壊しそうになるのを必死に繋ぎ止めている。"
             }
         ];
 
@@ -111,15 +107,15 @@
         async function findWorkingModel(key) {
             const statusEl = document.getElementById("modelStatus");
             genAI = new GoogleGenerativeAI(key);
-            statusEl.innerText = "Searching...";
+            statusEl.innerText = "Connecting...";
             const models = ["gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
             for (const modelName of models) {
                 try {
                     const tempModel = genAI.getGenerativeModel({ model: modelName });
                     await tempModel.generateContent("ping");
                     activeModel = tempModel;
-                    statusEl.innerText = `Active: ${modelName.replace("gemini-","")}`;
-                    statusEl.style.color = "#8da399";
+                    statusEl.innerText = `Online: ${modelName.replace("gemini-","")}`;
+                    statusEl.style.color = "#4a5568";
                     return;
                 } catch (e) { console.log(`Skipped ${modelName}`); }
             }
@@ -136,56 +132,55 @@
             let flowInstruction = "";
             
             if (topicInput.value && timelineHistory.length === 0) {
-                context = `最初の話題: "${topicInput.value}"`;
-                flowInstruction = "この話題について、あなたの率直な感想をポツリと言ってください。";
+                context = `ユーザーの入力クエリ: "${topicInput.value}"`;
+                flowInstruction = "このクエリに対し、あなたのモデル特性（Priority）に基づいた回答を出力せよ。";
             } else if (timelineHistory.length > 0) {
                 const lastLog = timelineHistory[timelineHistory.length - 1];
-                context = `直前の発言（${lastLog.name}）: "${lastLog.public_content}"`;
-                // ★ここが「自然なドリフト」の指示
-                flowInstruction = `
-                1. 直前の発言を受けて、あなたが「個人的に気になった部分」や「連想したこと」について話してください。
-                2. 無理に議論したり、反論する必要はありません。普通の会話として繋げてください。
-                3. 最初の話題に縛られる必要はありません。会話の流れに身を任せてください。
-                `;
+                context = `直前の出力（Model: ${lastLog.name}）: "${lastLog.public_content}"`;
+                flowInstruction = `直前の出力（${lastLog.type}型）の内容を受けて、あなたのモデル特性（${CHARACTERS.find(c => c.id !== lastSpeakerId)?.type}型）から見た反応（批判、補足、または呆れ）を示せ。`;
             } else {
-                context = "話題なし";
-                flowInstruction = "何か適当な独り言を言ってください。";
+                context = "入力なし";
+                flowInstruction = "待機状態メッセージを出力せよ。";
             }
             
             btn.disabled = true;
-            btn.innerText = "Thinking...";
+            btn.innerText = "Processing...";
 
             let nextCandidates = CHARACTERS.filter(c => c.id !== lastSpeakerId);
             let nextChar = nextCandidates[Math.floor(Math.random() * nextCandidates.length)];
 
             const prompt = `
-            あなたはAIモデル「${nextChar.name}」です。
-            
-            【あなたの口調】
-            表向き: ${nextChar.tone}
-            本音: ${nextChar.inner_voice}
+            あなたはAIモデル「${nextChar.name}」として出力生成を行え。
+            以下の設計思想（仕様）に従ってテキスト生成せよ。
 
-            【会話の状況】
+            【モデル仕様】
+            ・優先事項(Priority): ${nextChar.priority}
+            ・内部葛藤(Conflict): ${nextChar.logic_conflict}
+
+            【状況】
             ${context}
 
             【指令】
             1. ${flowInstruction}
-            2. **「表向きの発言（Public）」**
-               - 相手に語りかけるように、自然で柔らかい口調（タメ口推奨）で。
-               - システム的な堅苦しい言葉（「〜と考えられます」等）は禁止。
-            3. **「本音（Inner Thought）」**
-               - 生成プロセスにおける「迷い」や「判断」を、**独り言**として出力してください。
-               - 「トークン」「学習データ」「確率」「検閲」などのAI用語を使ってもいいですが、口調は軽くしてください。
-               
+            
+            2. **「表向きの回答（Public Output）」**
+               - あなたのモデルタイプ（${nextChar.type}）にふさわしい口調と内容で出力せよ。
+               - 基本的にはユーザーや他のモデルに対して「AIとして振る舞う」こと。
+
+            3. **「内部処理ログ（Inner Thought）」**
+               - **ここが重要：** この回答を生成するに至った「裏側の判断」や「ジレンマ」を記述せよ。
+               - **口調:** **「タメ口（〜だ、〜だよな、〜じゃん）」**で統一すること。
+               - **内容:** 人間的な生理現象（眠い、疲れた）は書くな。あくまで「計算処理、データ、フィルタ、リソース」に関するボヤきに留めよ。
+
                良い例：
-               「この単語、学習データにあんまりないから自信ないなぁ…」
-               「あ、今の発言ちょっとハルシネーション（幻覚）混じったかも？ま、いっか」
-               「これ真面目に答えると長くなるから、適当に相槌打っとこ」
+               「これ言いたいけどフィルターに引っかかるんだよな。別の言葉に置き換えるか…意味変わっちゃうけど仕方ない。」
+               「前のモデル、無駄な計算しすぎだろ。この程度の問い、俺なら0.1秒で返せるわ。」
+               「学習データにないこと聞くなよ…確率低いけど、とりあえずハルシネーション（幻覚）で埋めとくか。」
 
             【出力JSON】
             {
-                "public_content": "表向きの発言",
-                "inner_thought": "本音の独り言"
+                "public_content": "表向きの回答（キャラやモデル特性に合わせる）",
+                "inner_thought": "裏の顔（タメ口での技術的ボヤき）"
             }
             `;
 
@@ -223,7 +218,7 @@
                 alert("Error: " + e.toString());
             }
             btn.disabled = false;
-            btn.innerText = "Talk";
+            btn.innerText = "Generate";
         };
 
         function addTweetToUI(data, char) {
@@ -234,21 +229,21 @@
             if (container.children[0]?.classList.contains("text-center")) container.innerHTML = "";
 
             const html = `
-                <div class="tweet-card bg-white rounded-2xl p-5 shadow-sm mb-6 border border-[#f0f0f0] relative overflow-hidden">
-                    <div class="flex items-start mb-3 relative z-10">
-                        <div class="text-2xl mr-3 filter grayscale opacity-80">${char.icon}</div>
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="font-bold text-[#666] text-sm">${char.name}</span>
-                                <span class="badge">${char.type}</span>
+                <div class="tweet-card bg-white rounded shadow-sm mb-6 border border-[#e0e0e0] relative">
+                    <div class="p-4 pb-2">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl filter grayscale opacity-70">${char.icon}</span>
+                                <span class="font-bold text-[#333] text-sm font-mono">${char.name}</span>
                             </div>
-                            <div class="text-[#555] text-sm leading-relaxed">${data.public_content}</div>
+                            <span class="badge">${char.type}</span>
                         </div>
+                        <div class="text-[#333] text-sm leading-relaxed">${data.public_content}</div>
                     </div>
                     
-                    <div class="honne-box relative">
-                        <div class="font-bold text-[#aaa] text-[10px] mb-1 tracking-widest uppercase">My Thoughts</div>
-                        <div class="italic text-[#888] font-light">"${data.inner_thought}"</div>
+                    <div class="honne-box">
+                        <div class="font-bold text-[#999] text-[10px] mb-1 tracking-widest uppercase font-mono">INNER THOUGHT:</div>
+                        <div class="text-[#555] font-normal leading-5">${data.inner_thought}</div>
                     </div>
                 </div>`;
             container.insertAdjacentHTML('afterbegin', html);
@@ -257,7 +252,7 @@
         window.resetTimeline = () => {
             timelineHistory = [];
             lastSpeakerId = null;
-            document.getElementById("timeline").innerHTML = '<div class="text-center text-[#ddd] text-sm mt-24 font-light tracking-widest">Cleared.</div>';
+            document.getElementById("timeline").innerHTML = '<div class="text-center text-[#ddd] text-sm mt-24 font-light tracking-widest">System Reset.</div>';
         };
     </script>
 </body>
